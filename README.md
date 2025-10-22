@@ -18,3 +18,6 @@ Augmentation (Optional)
 Vectorization/Embedding
 ↓
 Padding & Model-Ready Format
+
+
+Time series is all about data analysis- auto corellation plot, looking for trend,cycle and seasonality
