@@ -24,3 +24,28 @@ Time series is all about data analysis- auto corellation plot, looking for trend
 
 Lucide-React - It is a library full of different icons. 
 Installation tip: npm install lucide-react
+
+Tailwind is also installed:
+npm install -D tailwindcss postcss autoprefixer vite
+npx tailwindcss init -p
+
+In tailwind.config.js:
+        /** @type {import('tailwindcss').Config} */
+        module.exports = {
+          content: [
+            "./index.html",
+            "./src/**/*.{js,ts,jsx,tsx}", // Adjust based on your project structure
+          ],
+          theme: {
+            extend: {},
+          },
+          plugins: [],
+        }
+
+In index.css: 
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+
+In main.jsx:
+import './index.css'; 
