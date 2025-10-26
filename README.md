@@ -49,3 +49,14 @@ In index.css:
 
 In main.jsx:
 import './index.css'; 
+
+What is Lodash and why it is used here?
+Lodash provides various inbuilt functions for collections, arrays, manipulated objects, and other utility methods that we can use directly instead of writing them from scratch. It makes it easier to iterate over the arrays, strings as well as objects. Its modular methods make the creation of composite functions easier.
+
+Left to write are: where loadash is used in this project and why lodash especifically is used here?
+
+Lodash Installation tip:
+npm install lodash
+
+Now in order to use the Lodash library, you need to require it in the code file.
+const _ = require("lodash");
