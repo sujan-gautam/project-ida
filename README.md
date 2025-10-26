@@ -61,3 +61,7 @@ npm install lodash
 Now in order to use the Lodash library, you need to require it in the code file.
 const _ = require("lodash");
 
+Nodejs version used: 22.0
+
+Vercel Deployment Guide:
+Uploaded to github and connected to vercel to deploy it.
