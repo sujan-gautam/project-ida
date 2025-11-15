@@ -6,6 +6,7 @@ import { datasetAPI } from '../services/api';
 import { Dataset } from '../types';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import { sessionStorage } from '../utils/sessionStorage';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -39,6 +40,12 @@ const Dashboard: React.FC = () => {
     navigate('/login');
   };
 
+  const handleNewDataset = () => {
+    // Clear any existing analyzer session to start fresh
+    sessionStorage.clear();
+    navigate('/analyzer');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-slate-900 to-zinc-950 p-4 md:p-8 pb-20">
       {/* Subtle Grid Background */}
@@ -65,7 +72,7 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate('/analyzer')}
+              onClick={handleNewDataset}
               className="px-4 py-2 bg-slate-800/50 backdrop-blur-sm text-white rounded-lg border border-slate-700/50 hover:bg-slate-800/70 hover:border-emerald-500/30 transition-all flex items-center gap-2 text-sm font-medium"
             >
               <Upload className="w-4 h-4" />
@@ -97,7 +104,7 @@ const Dashboard: React.FC = () => {
               </p>
             </div>
             <button
-              onClick={() => navigate('/analyzer')}
+              onClick={handleNewDataset}
               className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center gap-2"
             >
               <Upload className="w-5 h-5" />
