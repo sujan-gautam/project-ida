@@ -47,20 +47,26 @@ const Analyzer: React.FC = () => {
     'preview',
   ];
 
-  // Restore session on mount
+  // Restore session on mount (only if no ID and session exists)
   useEffect(() => {
     const savedSession = sessionStorage.load();
     if (savedSession && !id) {
-      // Restore session if no URL param
+      // Only restore if session has a valid datasetId
+      // If session was cleared (null datasetId), start fresh
       if (savedSession.datasetId) {
         navigate(`/analyzer/${savedSession.datasetId}`, { replace: true });
         setActiveTab(savedSession.activeTab);
         setPreprocessingSteps(savedSession.preprocessingSteps);
         setFileName(savedSession.fileName);
         toast.success('Session restored!', { icon: '💾' });
+      } else {
+        // Session was cleared, start fresh
+        setSessionRestored(true);
       }
+    } else {
+      // No session or has ID, proceed normally
+      setSessionRestored(true);
     }
-    setSessionRestored(true);
   }, [id, navigate]);
 
   // Save session when state changes

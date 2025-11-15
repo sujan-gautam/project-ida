@@ -14,10 +14,17 @@ import {
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import HomepageWorkflow from '../components/HomepageWorkflow';
+import { sessionStorage } from '../utils/sessionStorage';
 
 const Homepage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+
+  const handleLaunchPipeline = () => {
+    // Clear any existing analyzer session to start fresh
+    sessionStorage.clear();
+    navigate('/analyzer');
+  };
 
   const features = [
     {
@@ -166,7 +173,7 @@ const Homepage: React.FC = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(isAuthenticated ? '/analyzer' : '/signup')}
+                onClick={() => isAuthenticated ? handleLaunchPipeline() : navigate('/signup')}
                 className="px-8 py-4 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-xl font-semibold text-lg hover:shadow-2xl hover:shadow-emerald-500/25 transition-all flex items-center gap-2 group"
               >
                 <Play className="w-5 h-5" />
