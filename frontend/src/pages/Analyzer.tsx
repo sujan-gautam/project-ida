@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate , Link} from 'react-router-dom';
 import {
   Activity,
   Zap,
@@ -46,6 +46,7 @@ const Analyzer: React.FC = () => {
     'preprocessing',
     'preview',
   ];
+
 
   // Restore session on mount
   useEffect(() => {
@@ -181,16 +182,19 @@ const Analyzer: React.FC = () => {
         {/* Compact Header */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-3 mb-2">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-              className="relative"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 blur-xl rounded-full"></div>
-              <Activity className="w-8 h-8 text-emerald-400 relative z-10" />
-            </motion.div>
+            <Link to="/">            
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                className="relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 blur-xl rounded-full"></div>
+                <Activity className="w-8 h-8 text-emerald-400 relative z-10" />
+              </motion.div>
+            </Link>
+
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-              Data Analyzer Pro
+              <Link to="/">Data Analyzer Pro</Link>
             </h1>
           </div>
           <p className="text-slate-400 text-sm">
