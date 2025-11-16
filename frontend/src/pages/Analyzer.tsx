@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate , Link} from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Activity,
   Zap,
@@ -38,6 +38,7 @@ const Analyzer: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [activeBottomTab, setActiveBottomTab] = useState('chat');
+  const [activeBottomAnalysisTab, setActiveBottomAnalysisTab] = useState('overview');
   const [preprocessingSteps, setPreprocessingSteps] = useState<string[]>([]);
   const [sessionRestored, setSessionRestored] = useState(false);
   const [isAnalysisFullscreen, setIsAnalysisFullscreen] = useState(false);
@@ -52,7 +53,6 @@ const Analyzer: React.FC = () => {
     'preprocessing',
     'preview',
   ];
-
 
   // Restore session on mount (only if no ID and session exists)
   useEffect(() => {
@@ -191,9 +191,19 @@ const Analyzer: React.FC = () => {
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-10 pointer-events-none"></div>
       
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Compact Header */}
-        <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-3 mb-2">
+        {/* Header with Back Button and Title */}
+        <div className="flex items-center justify-between mb-6">
+          {/* Back Button */}
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 backdrop-blur-sm text-white rounded-lg border border-slate-700/50 hover:bg-slate-800/70 hover:border-emerald-500/30 transition-all text-sm font-medium group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to Dashboard
+          </button>
+
+          {/* Title and Icon - Centered */}
+          <div className="flex items-center gap-3 flex-1 justify-center">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
@@ -203,7 +213,7 @@ const Analyzer: React.FC = () => {
               <Activity className="w-8 h-8 text-emerald-400 relative z-10" />
             </motion.div>
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-              <Link to="/">Data Analyzer Pro</Link>
+              Data Analyzer Pro
             </h1>
           </div>
 
@@ -271,22 +281,20 @@ const Analyzer: React.FC = () => {
 
             {/* Tabs and Content - Compact */}
             <div className="bg-slate-800/40 backdrop-blur-sm rounded-xl shadow-lg mb-6 border border-slate-700/50 overflow-hidden relative group">
-              <div className="flex items-center justify-between bg-slate-900/50 backdrop-blur-sm border-b border-slate-700/50 px-4 py-2">
-                <div className="flex-1">
-                  <Tabs
-                    activeTab={activeTab}
-                    onTabChange={handleTabChange}
-                    tabs={tabs}
-                  />
-                </div>
+              <div className="absolute top-4 right-4 z-20">
                 <button
                   onClick={() => setIsAnalysisFullscreen(true)}
-                  className="ml-4 p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100 flex-shrink-0"
+                  className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100"
                   title="View analysis in fullscreen"
                 >
                   <Maximize2 className="w-4 h-4 text-slate-300" />
                 </button>
               </div>
+              <Tabs
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                tabs={tabs}
+              />
 
               <div className="p-4 md:p-6 max-h-[600px] overflow-y-auto scrollbar-hide">
                 {activeTab === 'overview' && <OverviewTab analysis={analysis} />}
@@ -359,59 +367,57 @@ const Analyzer: React.FC = () => {
 
             {/* Chat and Analysis Tabbed View */}
             <div className="bg-slate-800/40 backdrop-blur-sm rounded-xl shadow-lg mb-6 border border-slate-700/50 overflow-hidden relative group">
-              <div className="flex items-center justify-between bg-slate-900/50 backdrop-blur-sm border-b border-slate-700/50 px-4 py-2">
-                <div className="flex-1 overflow-x-auto">
-                  <div className="flex overflow-x-auto p-1">
-                    <button
-                      onClick={() => setActiveBottomTab('chat')}
-                      className={`px-6 py-3 font-medium transition-all duration-200 whitespace-nowrap relative text-sm flex items-center gap-2 ${
-                        activeBottomTab === 'chat'
-                          ? 'text-white'
-                          : 'text-slate-400 hover:text-slate-300'
-                      }`}
-                    >
-                      {activeBottomTab === 'chat' && (
-                        <motion.div
-                          layoutId="activeBottomTab"
-                          className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg border-b-2 border-emerald-400"
-                          initial={false}
-                          transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                        />
-                      )}
-                      <span className="relative z-10 flex items-center gap-2">
-                        <Brain className="w-4 h-4" />
-                        Chat
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => setActiveBottomTab('analysis')}
-                      className={`px-6 py-3 font-medium transition-all duration-200 whitespace-nowrap relative text-sm flex items-center gap-2 ${
-                        activeBottomTab === 'analysis'
-                          ? 'text-white'
-                          : 'text-slate-400 hover:text-slate-300'
-                      }`}
-                    >
-                      {activeBottomTab === 'analysis' && (
-                        <motion.div
-                          layoutId="activeBottomTab"
-                          className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg border-b-2 border-emerald-400"
-                          initial={false}
-                          transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                        />
-                      )}
-                      <span className="relative z-10 flex items-center gap-2">
-                        <Activity className="w-4 h-4" />
-                        Analysis
-                      </span>
-                    </button>
-                  </div>
-                </div>
+              <div className="absolute top-4 right-4 z-20">
                 <button
                   onClick={() => setIsChatAnalysisFullscreen(true)}
-                  className="ml-4 p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100 flex-shrink-0"
+                  className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100"
                   title="View chat and analysis in fullscreen"
                 >
                   <Maximize2 className="w-4 h-4 text-slate-300" />
+                </button>
+              </div>
+              <div className="flex overflow-x-auto bg-slate-900/50 backdrop-blur-sm border-b border-slate-700/50 p-1">
+                <button
+                  onClick={() => setActiveBottomTab('chat')}
+                  className={`px-6 py-3 font-medium transition-all duration-200 whitespace-nowrap relative text-sm flex items-center gap-2 ${
+                    activeBottomTab === 'chat'
+                      ? 'text-white'
+                      : 'text-slate-400 hover:text-slate-300'
+                  }`}
+                >
+                  {activeBottomTab === 'chat' && (
+                    <motion.div
+                      layoutId="activeBottomTab"
+                      className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg border-b-2 border-emerald-400"
+                      initial={false}
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Brain className="w-4 h-4" />
+                    Chat
+                  </span>
+                </button>
+                <button
+                  onClick={() => setActiveBottomTab('analysis')}
+                  className={`px-6 py-3 font-medium transition-all duration-200 whitespace-nowrap relative text-sm flex items-center gap-2 ${
+                    activeBottomTab === 'analysis'
+                      ? 'text-white'
+                      : 'text-slate-400 hover:text-slate-300'
+                  }`}
+                >
+                  {activeBottomTab === 'analysis' && (
+                    <motion.div
+                      layoutId="activeBottomTab"
+                      className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg border-b-2 border-emerald-400"
+                      initial={false}
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Activity className="w-4 h-4" />
+                    Analysis
+                  </span>
                 </button>
               </div>
 
@@ -432,8 +438,56 @@ const Analyzer: React.FC = () => {
                   </div>
                 )}
                 {activeBottomTab === 'analysis' && (
-                  <div className="p-4 md:p-6 max-h-[700px] overflow-y-auto scrollbar-hide">
-                    <OverviewTab analysis={analysis} />
+                  <div className="p-0">
+                    <div className="flex overflow-x-auto bg-slate-900/50 backdrop-blur-sm border-b border-slate-700/50 p-1">
+                      {tabs.map((tab) => (
+                        <button
+                          key={tab}
+                          onClick={() => setActiveBottomAnalysisTab(tab)}
+                          className={`px-4 py-2 font-medium transition-all duration-200 whitespace-nowrap relative text-sm ${
+                            activeBottomAnalysisTab === tab
+                              ? 'text-white'
+                              : 'text-slate-400 hover:text-slate-300'
+                          }`}
+                        >
+                          {activeBottomAnalysisTab === tab && (
+                            <motion.div
+                              layoutId="activeBottomAnalysisTab"
+                              className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg border-b-2 border-emerald-400"
+                              initial={false}
+                              transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                            />
+                          )}
+                          <span className="relative z-10">
+                            {tab === 'data-quality' ? 'Data Quality' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="p-4 md:p-6 max-h-[700px] overflow-y-auto scrollbar-hide">
+                      {activeBottomAnalysisTab === 'overview' && <OverviewTab analysis={analysis} />}
+                      {activeBottomAnalysisTab === 'distributions' && (
+                        <DistributionsTab analysis={analysis} data={data} />
+                      )}
+                      {activeBottomAnalysisTab === 'correlations' && (
+                        <CorrelationsTab analysis={analysis} data={data} />
+                      )}
+                      {activeBottomAnalysisTab === 'outliers' && (
+                        <OutliersTab analysis={analysis} data={data} />
+                      )}
+                      {activeBottomAnalysisTab === 'data-quality' && (
+                        <DataQualityTab analysis={analysis} data={data} />
+                      )}
+                      {activeBottomAnalysisTab === 'preprocessing' && (
+                        <PreprocessingTab
+                          datasetId={dataset!._id}
+                          analysis={analysis}
+                          onPreprocess={handlePreprocess}
+                          onReset={handleReset}
+                        />
+                      )}
+                      {activeBottomAnalysisTab === 'preview' && <PreviewTab data={data} />}
+                    </div>
                   </div>
                 )}
               </div>
@@ -443,10 +497,10 @@ const Analyzer: React.FC = () => {
             <FullscreenChartModal
               isOpen={isChatAnalysisFullscreen}
               onClose={() => setIsChatAnalysisFullscreen(false)}
-              title={activeBottomTab === 'chat' ? 'AI Chat Assistant' : 'Analysis Overview'}
+              title={activeBottomTab === 'chat' ? 'AI Chat Assistant' : 'Data Analysis'}
             >
               <div className="h-full w-full flex flex-col overflow-hidden">
-                {/* Compact Tab Bar */}
+                {/* Main Tab Bar - Chat/Analysis */}
                 <div className="flex-shrink-0 bg-slate-800/50 border-b border-slate-700/50">
                   <div className="flex overflow-x-auto bg-slate-900/50 backdrop-blur-sm p-0.5">
                     <button
@@ -493,6 +547,38 @@ const Analyzer: React.FC = () => {
                     </button>
                   </div>
                 </div>
+                
+                {/* Analysis Sub-Tabs - Only show when Analysis tab is active */}
+                {activeBottomTab === 'analysis' && (
+                  <div className="flex-shrink-0 bg-slate-800/30 border-b border-slate-700/50">
+                    <div className="flex overflow-x-auto bg-slate-900/30 backdrop-blur-sm p-0.5">
+                      {tabs.map((tab) => (
+                        <button
+                          key={tab}
+                          onClick={() => setActiveBottomAnalysisTab(tab)}
+                          className={`px-3 py-1.5 font-medium transition-all duration-200 whitespace-nowrap relative text-xs ${
+                            activeBottomAnalysisTab === tab
+                              ? 'text-white'
+                              : 'text-slate-400 hover:text-slate-300'
+                          }`}
+                        >
+                          {activeBottomAnalysisTab === tab && (
+                            <motion.div
+                              layoutId="activeBottomAnalysisTabFullscreen"
+                              className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded border-b border-emerald-400"
+                              initial={false}
+                              transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                            />
+                          )}
+                          <span className="relative z-10">
+                            {tab === 'data-quality' ? 'Data Quality' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 {/* Maximized Content Area */}
                 <div className="flex-1 overflow-y-auto p-2 md:p-3 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent bg-slate-900/20 min-h-0">
                   {activeBottomTab === 'chat' && (
@@ -512,7 +598,28 @@ const Analyzer: React.FC = () => {
                   )}
                   {activeBottomTab === 'analysis' && (
                     <div className="h-full w-full">
-                      <OverviewTab analysis={analysis} />
+                      {activeBottomAnalysisTab === 'overview' && <OverviewTab analysis={analysis} />}
+                      {activeBottomAnalysisTab === 'distributions' && (
+                        <DistributionsTab analysis={analysis} data={data} />
+                      )}
+                      {activeBottomAnalysisTab === 'correlations' && (
+                        <CorrelationsTab analysis={analysis} data={data} />
+                      )}
+                      {activeBottomAnalysisTab === 'outliers' && (
+                        <OutliersTab analysis={analysis} data={data} />
+                      )}
+                      {activeBottomAnalysisTab === 'data-quality' && (
+                        <DataQualityTab analysis={analysis} data={data} />
+                      )}
+                      {activeBottomAnalysisTab === 'preprocessing' && (
+                        <PreprocessingTab
+                          datasetId={dataset!._id}
+                          analysis={analysis}
+                          onPreprocess={handlePreprocess}
+                          onReset={handleReset}
+                        />
+                      )}
+                      {activeBottomAnalysisTab === 'preview' && <PreviewTab data={data} />}
                     </div>
                   )}
                 </div>
