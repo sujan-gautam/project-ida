@@ -81,32 +81,59 @@ const SummarizerChat: React.FC<SummarizerChatProps> = ({
     }
   }, [messages]);
 
-  const runWorkflow = async () => {
+  const runWorkflow = async (apiPromise: Promise<any>) => {
     setShowWorkflow(true);
     setWorkflowSteps(prev => prev.map(s => ({ ...s, status: 'pending' as const })));
 
-    for (let i = 0; i < workflowSteps.length; i++) {
+    // Run first 3 steps with animation
+    for (let i = 0; i < workflowSteps.length - 1; i++) {
       setWorkflowSteps(prev => 
         prev.map((s, idx) => 
           idx === i ? { ...s, status: 'running' as const } : 
           idx < i ? { ...s, status: 'completed' as const } : s
         )
       );
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 600));
     }
 
-    // Final step - generate summary
+    // Set the last step (AI Summarization) to running
     setWorkflowSteps(prev => 
-      prev.map(s => ({ ...s, status: 'completed' as const }))
+      prev.map((s, idx) => 
+        idx < workflowSteps.length - 1 ? { ...s, status: 'completed' as const } :
+        idx === workflowSteps.length - 1 ? { ...s, status: 'running' as const } : s
+      )
     );
+
+    // Wait for API response before completing the animation
+    try {
+      const result = await apiPromise;
+      // Complete all steps when API response is ready
+      setWorkflowSteps(prev => 
+        prev.map(s => ({ ...s, status: 'completed' as const }))
+      );
+      // Small delay to show completion state
+      await new Promise(resolve => setTimeout(resolve, 300));
+      return result;
+    } catch (error) {
+      // On error, still complete the steps but mark as error
+      setWorkflowSteps(prev => 
+        prev.map(s => ({ ...s, status: 'completed' as const }))
+      );
+      throw error;
+    }
   };
 
   const generateSummary = async (prompt: string, summaryType: string = 'comprehensive') => {
     setInitializing(true);
-    await runWorkflow();
     
     try {
-      const result = await datasetAPI.summarize(datasetId, prompt, true);
+      // Start API call immediately
+      const apiCall = datasetAPI.summarize(datasetId, prompt, true);
+      
+      // Run workflow animation that waits for API response and returns the result
+      const result = await runWorkflow(apiCall);
+      
+      // Process the result
       const sortedThreads = [...result.threads].sort((a, b) => 
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       );
