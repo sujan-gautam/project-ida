@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Bot, User, Sparkles, Brain, CheckCircle2, Loader2, Database, BarChart3, TrendingUp, AlertTriangle, Activity } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Brain, CheckCircle2, Loader2, Database, BarChart3, TrendingUp, AlertTriangle, Activity, Download, FileText, FileDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { datasetAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { ThreadMessage } from '../types';
+import { exportToPDF, exportToDOCX } from '../utils/exportUtils';
 
 interface SummarizerChatProps {
   datasetId: string;
@@ -189,6 +190,30 @@ const SummarizerChat: React.FC<SummarizerChatProps> = ({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
+    }
+  };
+
+  const handleDownloadPDF = async (content: string, index: number) => {
+    try {
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `data-scientist-analysis-${timestamp}-${index + 1}.pdf`;
+      await exportToPDF(content, filename);
+      toast.success('PDF downloaded successfully!');
+    } catch (error: any) {
+      toast.error('Failed to download PDF');
+      console.error(error);
+    }
+  };
+
+  const handleDownloadDOCX = async (content: string, index: number) => {
+    try {
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `data-scientist-analysis-${timestamp}-${index + 1}.docx`;
+      await exportToDOCX(content, filename);
+      toast.success('DOCX downloaded successfully!');
+    } catch (error: any) {
+      toast.error('Failed to download DOCX');
+      console.error(error);
     }
   };
 
@@ -386,40 +411,65 @@ const SummarizerChat: React.FC<SummarizerChatProps> = ({
                   }`}
                 >
                   {message.role === 'assistant' ? (
-                    <div className="prose prose-sm md:prose-base max-w-none dark
-                      prose-headings:text-white prose-headings:font-semibold
-                      prose-h1:text-xl md:prose-h1:text-2xl prose-h1:border-b prose-h1:border-neutral-700 prose-h1:pb-2 prose-h1:mb-4
-                      prose-h2:text-lg md:prose-h2:text-xl prose-h2:text-emerald-400 prose-h2:mt-6 prose-h2:mb-3
-                      prose-h3:text-base md:prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2 prose-h3:text-neutral-200
-                      prose-p:text-neutral-300 prose-p:leading-relaxed prose-p:my-3
-                      prose-strong:text-white prose-strong:font-semibold
-                      prose-code:text-emerald-300 prose-code:bg-emerald-500/20 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-code:border prose-code:border-emerald-500/30
-                      prose-pre:bg-neutral-950 prose-pre:text-neutral-100 prose-pre:border prose-pre:border-neutral-800 prose-pre:rounded-lg prose-pre:p-4 prose-pre:overflow-x-auto
-                      prose-ul:text-neutral-300 prose-ul:my-3 prose-ul:space-y-1
-                      prose-ol:text-neutral-300 prose-ol:my-3 prose-ol:space-y-1
-                      prose-li:text-neutral-300 prose-li:my-1
-                      prose-a:text-cyan-400 prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-cyan-300
-                      prose-blockquote:text-neutral-400 prose-blockquote:border-l-emerald-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:my-4
-                      prose-hr:border-neutral-700 prose-hr:my-6
-                      prose-table:w-full prose-table:my-4
-                      prose-th:bg-neutral-900 prose-th:font-semibold prose-th:p-2 prose-th:border prose-th:border-neutral-800 prose-th:text-neutral-200
-                      prose-td:p-2 prose-td:border prose-td:border-neutral-800 prose-td:text-neutral-300">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {message.content}
-                      </ReactMarkdown>
-                    </div>
+                    <>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-neutral-400 font-mono">
+                            {new Date(message.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleDownloadPDF(message.content, index)}
+                            className="p-1.5 rounded-lg bg-neutral-800/50 hover:bg-neutral-800 border border-neutral-700 hover:border-emerald-500/50 transition-all group"
+                            title="Download as PDF"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-neutral-400 group-hover:text-emerald-400 transition-colors" />
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleDownloadDOCX(message.content, index)}
+                            className="p-1.5 rounded-lg bg-neutral-800/50 hover:bg-neutral-800 border border-neutral-700 hover:border-cyan-500/50 transition-all group"
+                            title="Download as DOCX"
+                          >
+                            <FileDown className="w-3.5 h-3.5 text-neutral-400 group-hover:text-cyan-400 transition-colors" />
+                          </motion.button>
+                        </div>
+                      </div>
+                      <div className="prose prose-sm md:prose-base max-w-none dark
+                        prose-headings:text-white prose-headings:font-semibold
+                        prose-h1:text-xl md:prose-h1:text-2xl prose-h1:border-b prose-h1:border-neutral-700 prose-h1:pb-2 prose-h1:mb-4
+                        prose-h2:text-lg md:prose-h2:text-xl prose-h2:text-emerald-400 prose-h2:mt-6 prose-h2:mb-3
+                        prose-h3:text-base md:prose-h3:text-lg prose-h3:mt-4 prose-h3:mb-2 prose-h3:text-neutral-200
+                        prose-p:text-neutral-300 prose-p:leading-relaxed prose-p:my-3
+                        prose-strong:text-white prose-strong:font-semibold
+                        prose-code:text-emerald-300 prose-code:bg-emerald-500/20 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-code:border prose-code:border-emerald-500/30
+                        prose-pre:bg-neutral-950 prose-pre:text-neutral-100 prose-pre:border prose-pre:border-neutral-800 prose-pre:rounded-lg prose-pre:p-4 prose-pre:overflow-x-auto
+                        prose-ul:text-neutral-300 prose-ul:my-3 prose-ul:space-y-1
+                        prose-ol:text-neutral-300 prose-ol:my-3 prose-ol:space-y-1
+                        prose-li:text-neutral-300 prose-li:my-1
+                        prose-a:text-cyan-400 prose-a:underline prose-a:underline-offset-2 hover:prose-a:text-cyan-300
+                        prose-blockquote:text-neutral-400 prose-blockquote:border-l-emerald-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:my-4
+                        prose-hr:border-neutral-700 prose-hr:my-6
+                        prose-table:w-full prose-table:my-4
+                        prose-th:bg-neutral-900 prose-th:font-semibold prose-th:p-2 prose-th:border prose-th:border-neutral-800 prose-th:text-neutral-200
+                        prose-td:p-2 prose-td:border prose-td:border-neutral-800 prose-td:text-neutral-300">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
+                    </>
                   ) : (
-                    <div className="whitespace-pre-wrap text-sm md:text-base">{message.content}</div>
+                    <>
+                      <div className="whitespace-pre-wrap text-sm md:text-base">{message.content}</div>
+                      <div className="text-xs mt-3 font-mono text-neutral-600">
+                        {new Date(message.timestamp).toLocaleTimeString()}
+                      </div>
+                    </>
                   )}
-                  <div
-                    className={`text-xs mt-3 font-mono ${
-                      message.role === 'user'
-                        ? 'text-neutral-600'
-                        : 'text-neutral-500'
-                    }`}
-                  >
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </div>
                 </div>
                 {message.role === 'user' && (
                   <div className="flex-shrink-0 w-10 h-10 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center">

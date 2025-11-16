@@ -40,6 +40,16 @@ html, body, #root {
   background-color: rgba(196, 181, 253, 0.8);
 }
 
+/* Hide scrollbar but keep scrolling functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
 /* Markdown/Prose styling for AI responses */
 .prose {
   color: inherit;

@@ -6,6 +6,8 @@ import {
   Download,
   Sparkles,
   Brain,
+  ArrowLeft,
+  Maximize2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { datasetAPI } from '../services/api';
@@ -24,6 +26,7 @@ import PreprocessingTab from '../components/tabs/PreprocessingTab';
 import PreviewTab from '../components/tabs/PreviewTab';
 import AutomationWorkflow from '../components/AutomationWorkflow';
 import SummarizerChat from '../components/SummarizerChat';
+import FullscreenChartModal from '../components/FullscreenChartModal';
 
 const Analyzer: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
@@ -34,8 +37,11 @@ const Analyzer: React.FC = () => {
   const [fileName, setFileName] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [activeBottomTab, setActiveBottomTab] = useState('chat');
   const [preprocessingSteps, setPreprocessingSteps] = useState<string[]>([]);
   const [sessionRestored, setSessionRestored] = useState(false);
+  const [isAnalysisFullscreen, setIsAnalysisFullscreen] = useState(false);
+  const [isChatAnalysisFullscreen, setIsChatAnalysisFullscreen] = useState(false);
 
   const tabs = [
     'overview',
@@ -184,9 +190,19 @@ const Analyzer: React.FC = () => {
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-10 pointer-events-none"></div>
       
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Compact Header */}
-        <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-3 mb-2">
+        {/* Header with Back Button and Title */}
+        <div className="flex items-center justify-between mb-6">
+          {/* Back Button */}
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 backdrop-blur-sm text-white rounded-lg border border-slate-700/50 hover:bg-slate-800/70 hover:border-emerald-500/30 transition-all text-sm font-medium group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to Dashboard
+          </button>
+
+          {/* Title and Icon - Centered */}
+          <div className="flex items-center gap-3 flex-1 justify-center">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
@@ -199,6 +215,13 @@ const Analyzer: React.FC = () => {
               Data Analyzer Pro
             </h1>
           </div>
+
+          {/* Spacer to balance the layout */}
+          <div className="w-[140px]"></div>
+        </div>
+
+        {/* Subtitle */}
+        <div className="text-center mb-6">
           <p className="text-slate-400 text-sm">
             Enterprise-grade ETL pipeline with AI-powered insights
           </p>
@@ -256,14 +279,25 @@ const Analyzer: React.FC = () => {
             </div>
 
             {/* Tabs and Content - Compact */}
-            <div className="bg-slate-800/40 backdrop-blur-sm rounded-xl shadow-lg mb-6 border border-slate-700/50 overflow-hidden">
-              <Tabs
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                tabs={tabs}
-              />
+            <div className="bg-slate-800/40 backdrop-blur-sm rounded-xl shadow-lg mb-6 border border-slate-700/50 overflow-hidden relative group">
+              <div className="flex items-center justify-between bg-slate-900/50 backdrop-blur-sm border-b border-slate-700/50 px-4 py-2">
+                <div className="flex-1">
+                  <Tabs
+                    activeTab={activeTab}
+                    onTabChange={handleTabChange}
+                    tabs={tabs}
+                  />
+                </div>
+                <button
+                  onClick={() => setIsAnalysisFullscreen(true)}
+                  className="ml-4 p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100 flex-shrink-0"
+                  title="View analysis in fullscreen"
+                >
+                  <Maximize2 className="w-4 h-4 text-slate-300" />
+                </button>
+              </div>
 
-              <div className="p-4 md:p-6 max-h-[600px] overflow-y-auto">
+              <div className="p-4 md:p-6 max-h-[600px] overflow-y-auto scrollbar-hide">
                 {activeTab === 'overview' && <OverviewTab analysis={analysis} />}
                 {activeTab === 'distributions' && (
                   <DistributionsTab analysis={analysis} data={data} />
@@ -289,20 +323,210 @@ const Analyzer: React.FC = () => {
               </div>
             </div>
 
-            {/* AI Summarizer Chat - Compact */}
-            <div className="mb-6">
-              <SummarizerChat 
-                datasetId={dataset!._id} 
-                analysis={analysis}
-                onAutoSummarize={() => {
-                  // Scroll to summarizer when auto-summarize is triggered
-                  setTimeout(() => {
-                    const summarizerElement = document.querySelector('[data-summarizer]');
-                    summarizerElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                  }, 500);
-                }}
-              />
+            {/* Fullscreen Analysis Modal */}
+            <FullscreenChartModal
+              isOpen={isAnalysisFullscreen}
+              onClose={() => setIsAnalysisFullscreen(false)}
+              title="Data Analysis"
+            >
+              <div className="h-full w-full flex flex-col overflow-hidden">
+                {/* Compact Tab Bar */}
+                <div className="flex-shrink-0 bg-slate-800/50">
+                  <Tabs
+                    activeTab={activeTab}
+                    onTabChange={handleTabChange}
+                    tabs={tabs}
+                  />
+                </div>
+                {/* Maximized Content Area */}
+                <div className="flex-1 overflow-y-auto p-3 md:p-5 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent bg-slate-900/20 min-h-0">
+                  {activeTab === 'overview' && <OverviewTab analysis={analysis} />}
+                  {activeTab === 'distributions' && (
+                    <DistributionsTab analysis={analysis} data={data} />
+                  )}
+                  {activeTab === 'correlations' && (
+                    <CorrelationsTab analysis={analysis} data={data} />
+                  )}
+                  {activeTab === 'outliers' && (
+                    <OutliersTab analysis={analysis} data={data} />
+                  )}
+                  {activeTab === 'data-quality' && (
+                    <DataQualityTab analysis={analysis} data={data} />
+                  )}
+                  {activeTab === 'preprocessing' && (
+                    <PreprocessingTab
+                      datasetId={dataset!._id}
+                      analysis={analysis}
+                      onPreprocess={handlePreprocess}
+                      onReset={handleReset}
+                    />
+                  )}
+                  {activeTab === 'preview' && <PreviewTab data={data} />}
+                </div>
+              </div>
+            </FullscreenChartModal>
+
+            {/* Chat and Analysis Tabbed View */}
+            <div className="bg-slate-800/40 backdrop-blur-sm rounded-xl shadow-lg mb-6 border border-slate-700/50 overflow-hidden relative group">
+              <div className="flex items-center justify-between bg-slate-900/50 backdrop-blur-sm border-b border-slate-700/50 px-4 py-2">
+                <div className="flex-1 overflow-x-auto">
+                  <div className="flex overflow-x-auto p-1">
+                    <button
+                      onClick={() => setActiveBottomTab('chat')}
+                      className={`px-6 py-3 font-medium transition-all duration-200 whitespace-nowrap relative text-sm flex items-center gap-2 ${
+                        activeBottomTab === 'chat'
+                          ? 'text-white'
+                          : 'text-slate-400 hover:text-slate-300'
+                      }`}
+                    >
+                      {activeBottomTab === 'chat' && (
+                        <motion.div
+                          layoutId="activeBottomTab"
+                          className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg border-b-2 border-emerald-400"
+                          initial={false}
+                          transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                      <span className="relative z-10 flex items-center gap-2">
+                        <Brain className="w-4 h-4" />
+                        Chat
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setActiveBottomTab('analysis')}
+                      className={`px-6 py-3 font-medium transition-all duration-200 whitespace-nowrap relative text-sm flex items-center gap-2 ${
+                        activeBottomTab === 'analysis'
+                          ? 'text-white'
+                          : 'text-slate-400 hover:text-slate-300'
+                      }`}
+                    >
+                      {activeBottomTab === 'analysis' && (
+                        <motion.div
+                          layoutId="activeBottomTab"
+                          className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg border-b-2 border-emerald-400"
+                          initial={false}
+                          transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                      <span className="relative z-10 flex items-center gap-2">
+                        <Activity className="w-4 h-4" />
+                        Analysis
+                      </span>
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsChatAnalysisFullscreen(true)}
+                  className="ml-4 p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100 flex-shrink-0"
+                  title="View chat and analysis in fullscreen"
+                >
+                  <Maximize2 className="w-4 h-4 text-slate-300" />
+                </button>
+              </div>
+
+              <div className="p-0">
+                {activeBottomTab === 'chat' && (
+                  <div className="p-2 md:p-3">
+                    <SummarizerChat 
+                      datasetId={dataset!._id} 
+                      analysis={analysis}
+                      onAutoSummarize={() => {
+                        // Scroll to summarizer when auto-summarize is triggered
+                        setTimeout(() => {
+                          const summarizerElement = document.querySelector('[data-summarizer]');
+                          summarizerElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }, 500);
+                      }}
+                    />
+                  </div>
+                )}
+                {activeBottomTab === 'analysis' && (
+                  <div className="p-4 md:p-6 max-h-[700px] overflow-y-auto scrollbar-hide">
+                    <OverviewTab analysis={analysis} />
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Fullscreen Chat and Analysis Modal */}
+            <FullscreenChartModal
+              isOpen={isChatAnalysisFullscreen}
+              onClose={() => setIsChatAnalysisFullscreen(false)}
+              title={activeBottomTab === 'chat' ? 'AI Chat Assistant' : 'Analysis Overview'}
+            >
+              <div className="h-full w-full flex flex-col overflow-hidden">
+                {/* Compact Tab Bar */}
+                <div className="flex-shrink-0 bg-slate-800/50 border-b border-slate-700/50">
+                  <div className="flex overflow-x-auto bg-slate-900/50 backdrop-blur-sm p-0.5">
+                    <button
+                      onClick={() => setActiveBottomTab('chat')}
+                      className={`px-4 py-2 font-medium transition-all duration-200 whitespace-nowrap relative text-sm flex items-center gap-2 ${
+                        activeBottomTab === 'chat'
+                          ? 'text-white'
+                          : 'text-slate-400 hover:text-slate-300'
+                      }`}
+                    >
+                      {activeBottomTab === 'chat' && (
+                        <motion.div
+                          layoutId="activeBottomTabFullscreen"
+                          className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg border-b-2 border-emerald-400"
+                          initial={false}
+                          transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                      <span className="relative z-10 flex items-center gap-2">
+                        <Brain className="w-4 h-4" />
+                        Chat
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setActiveBottomTab('analysis')}
+                      className={`px-4 py-2 font-medium transition-all duration-200 whitespace-nowrap relative text-sm flex items-center gap-2 ${
+                        activeBottomTab === 'analysis'
+                          ? 'text-white'
+                          : 'text-slate-400 hover:text-slate-300'
+                      }`}
+                    >
+                      {activeBottomTab === 'analysis' && (
+                        <motion.div
+                          layoutId="activeBottomTabFullscreen"
+                          className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg border-b-2 border-emerald-400"
+                          initial={false}
+                          transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                      <span className="relative z-10 flex items-center gap-2">
+                        <Activity className="w-4 h-4" />
+                        Analysis
+                      </span>
+                    </button>
+                  </div>
+                </div>
+                {/* Maximized Content Area */}
+                <div className="flex-1 overflow-y-auto p-2 md:p-3 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent bg-slate-900/20 min-h-0">
+                  {activeBottomTab === 'chat' && (
+                    <div className="h-full w-full">
+                      <SummarizerChat 
+                        datasetId={dataset!._id} 
+                        analysis={analysis}
+                        onAutoSummarize={() => {
+                          // Scroll to summarizer when auto-summarize is triggered
+                          setTimeout(() => {
+                            const summarizerElement = document.querySelector('[data-summarizer]');
+                            summarizerElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                          }, 500);
+                        }}
+                      />
+                    </div>
+                  )}
+                  {activeBottomTab === 'analysis' && (
+                    <div className="h-full w-full">
+                      <OverviewTab analysis={analysis} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </FullscreenChartModal>
           </>
         )}
 

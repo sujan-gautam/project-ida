@@ -43,7 +43,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({ analysis }) => {
         <h3 className="text-xl font-bold text-white mb-3">
           Column Analysis
         </h3>
-        <div className="overflow-x-auto rounded-lg border border-slate-700/50 max-h-[400px] overflow-y-auto bg-slate-900/30">
+        <div className="overflow-x-auto rounded-lg border border-slate-700/50 max-h-[400px] overflow-y-auto bg-slate-900/30 scrollbar-hide">
           <table className="w-full text-xs">
             <thead className="bg-slate-800/50 sticky top-0 border-b border-slate-700/50">
               <tr>

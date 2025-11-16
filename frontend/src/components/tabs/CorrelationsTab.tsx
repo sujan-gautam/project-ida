@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertCircle, Maximize2 } from 'lucide-react';
 import {
   ScatterChart,
   Scatter,
@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Analysis } from '../../types';
+import FullscreenChartModal from '../FullscreenChartModal';
 
 interface CorrelationsTabProps {
   analysis: Analysis;
@@ -62,7 +63,7 @@ const CorrelationsTab: React.FC<CorrelationsTabProps> = ({
     }
 
     return (
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto scrollbar-hide">
         <div className="inline-block min-w-full">
           <div className="flex">
             <div className="w-32"></div>
@@ -125,6 +126,9 @@ const CorrelationsTab: React.FC<CorrelationsTabProps> = ({
     );
   };
 
+  const [heatmapFullscreen, setHeatmapFullscreen] = useState(false);
+  const [scatterFullscreen, setScatterFullscreen] = useState(false);
+
   return (
     <div className="space-y-8">
       <h2 className="text-3xl font-bold text-white mb-6">
@@ -133,10 +137,19 @@ const CorrelationsTab: React.FC<CorrelationsTabProps> = ({
 
       {analysis.correlations.length > 0 ? (
         <>
-          <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-6 border border-gray-200">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
-              Correlation Heatmap
-            </h3>
+          <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-6 border border-gray-200 relative group">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-800">
+                Correlation Heatmap
+              </h3>
+              <button
+                onClick={() => setHeatmapFullscreen(true)}
+                className="p-2 rounded-lg bg-slate-200/50 hover:bg-slate-300/50 border border-slate-300/50 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100"
+                title="View in fullscreen"
+              >
+                <Maximize2 className="w-4 h-4 text-slate-600" />
+              </button>
+            </div>
             {renderCorrelationHeatmap()}
             <div className="mt-4 flex items-center justify-center gap-6 text-sm">
               <div className="flex items-center gap-2">
@@ -177,12 +190,40 @@ const CorrelationsTab: React.FC<CorrelationsTabProps> = ({
               ))}
             </div>
           </div>
+          <FullscreenChartModal
+            isOpen={heatmapFullscreen}
+            onClose={() => setHeatmapFullscreen(false)}
+            title="Correlation Heatmap"
+          >
+            <div className="h-full w-full bg-white rounded-lg p-6 overflow-auto">
+              {renderCorrelationHeatmap()}
+              <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-4 bg-red-600"></div>
+                  <span>Positive</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-4 bg-blue-600"></div>
+                  <span>Negative</span>
+                </div>
+              </div>
+            </div>
+          </FullscreenChartModal>
 
           {analysis.numericColumns.length >= 2 && (
-            <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-6 border border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">
-                Scatter Plot Analysis
-              </h3>
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-6 border border-gray-200 relative group">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-800">
+                  Scatter Plot Analysis
+                </h3>
+                <button
+                  onClick={() => setScatterFullscreen(true)}
+                  className="p-2 rounded-lg bg-slate-200/50 hover:bg-slate-300/50 border border-slate-300/50 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100"
+                  title="View in fullscreen"
+                >
+                  <Maximize2 className="w-4 h-4 text-slate-600" />
+                </button>
+              </div>
               {renderScatterPlot(
                 analysis.numericColumns[0],
                 analysis.numericColumns[1]
@@ -193,6 +234,22 @@ const CorrelationsTab: React.FC<CorrelationsTabProps> = ({
               </p>
             </div>
           )}
+          <FullscreenChartModal
+            isOpen={scatterFullscreen}
+            onClose={() => setScatterFullscreen(false)}
+            title={`Scatter Plot: ${analysis.numericColumns[0]} vs ${analysis.numericColumns[1]}`}
+          >
+            <div className="h-full w-full bg-white rounded-lg p-6">
+              {renderScatterPlot(
+                analysis.numericColumns[0],
+                analysis.numericColumns[1]
+              )}
+              <p className="text-center text-sm text-gray-600 mt-4">
+                {analysis.numericColumns[0]} vs {analysis.numericColumns[1]}{' '}
+                (first 500 points)
+              </p>
+            </div>
+          </FullscreenChartModal>
         </>
       ) : (
         <div className="text-center py-12 text-gray-500">

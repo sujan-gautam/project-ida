@@ -27,7 +27,7 @@ const PreviewTab: React.FC<PreviewTabProps> = ({ data }) => {
       </div>
 
       <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-hide">
           <table className="w-full text-sm">
             <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
               <tr>
