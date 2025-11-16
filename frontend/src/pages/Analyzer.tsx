@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate , Link} from 'react-router-dom';
 import {
   Activity,
   Zap,
@@ -52,6 +52,7 @@ const Analyzer: React.FC = () => {
     'preprocessing',
     'preview',
   ];
+
 
   // Restore session on mount (only if no ID and session exists)
   useEffect(() => {
@@ -190,19 +191,9 @@ const Analyzer: React.FC = () => {
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-10 pointer-events-none"></div>
       
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header with Back Button and Title */}
-        <div className="flex items-center justify-between mb-6">
-          {/* Back Button */}
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 backdrop-blur-sm text-white rounded-lg border border-slate-700/50 hover:bg-slate-800/70 hover:border-emerald-500/30 transition-all text-sm font-medium group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Dashboard
-          </button>
-
-          {/* Title and Icon - Centered */}
-          <div className="flex items-center gap-3 flex-1 justify-center">
+        {/* Compact Header */}
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-3 mb-2">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
@@ -212,7 +203,7 @@ const Analyzer: React.FC = () => {
               <Activity className="w-8 h-8 text-emerald-400 relative z-10" />
             </motion.div>
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-              Data Analyzer Pro
+              <Link to="/">Data Analyzer Pro</Link>
             </h1>
           </div>
 
