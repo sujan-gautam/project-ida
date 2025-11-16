@@ -155,13 +155,13 @@ const AutomationWorkflow: React.FC<AutomationWorkflowProps> = ({
     {
       id: '9',
       name: 'AI Summary',
-      description: 'Gemini insights',
+      description: 'LLM insights',
       icon: Brain,
       status: 'pending',
       position: { x: 0, y: 0 },
       connections: ['10'],
       details: 'Generating intelligent summary',
-      code: 'insights = gemini.summarize(df)',
+      code: 'insights = LLM.summarize(df)',
       color: 'from-neutral-800 to-neutral-900',
     },
     {

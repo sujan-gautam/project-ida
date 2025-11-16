@@ -97,7 +97,7 @@ const HomepageWorkflow: React.FC = () => {
     {
       id: '9',
       name: 'AI Summary',
-      description: 'Gemini insights',
+      description: 'LLM insights',
       icon: Brain,
       status: 'pending',
       color: 'from-blue-500 to-indigo-500',
