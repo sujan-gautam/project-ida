@@ -1,18 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Activity, Upload, LogOut, FileText, Zap } from 'lucide-react';
+import { Activity, Upload, LogOut, FileText, Zap, Trash2, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { datasetAPI } from '../services/api';
 import { Dataset } from '../types';
 import toast from 'react-hot-toast';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { sessionStorage } from '../utils/sessionStorage';
+import VideoLogo from '../components/VideoLogo';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   useEffect(() => {
     loadDatasets();
@@ -46,6 +49,31 @@ const Dashboard: React.FC = () => {
     navigate('/analyzer');
   };
 
+  const handleDeleteClick = (e: React.MouseEvent, datasetId: string) => {
+    e.stopPropagation(); // Prevent card click navigation
+    setConfirmDelete(datasetId);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!confirmDelete) return;
+
+    setDeletingId(confirmDelete);
+    try {
+      await datasetAPI.delete(confirmDelete);
+      setDatasets(datasets.filter(d => d._id !== confirmDelete));
+      toast.success('Dataset deleted successfully');
+      setConfirmDelete(null);
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to delete dataset');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setConfirmDelete(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-slate-900 to-zinc-950 p-4 md:p-8 pb-20">
       {/* Subtle Grid Background */}
@@ -54,22 +82,15 @@ const Dashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-3">
-            <Link to="/">
-              <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-              className="relative"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 blur-xl rounded-full"></div>
-              <Activity className="w-10 h-10 text-emerald-400 relative z-10" />
-            </motion.div>
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex flex-col items-center gap-1">
+              <VideoLogo size="md" />
+              <span className="text-xs font-medium bg-gradient-to-r from-white via-slate-100 to-white bg-clip-text text-transparent tracking-wide font-inter antialiased">
+                Project <span className="font-bold">IDA</span>
+              </span>
             </Link>
-
+            <div className="h-12 w-px bg-slate-700/50"></div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                <Link to="/">Data Analyzer Pro</Link>
-              </h1>
               <p className="text-slate-400 text-sm">Welcome back, {user?.name}</p>
             </div>
           </div>
@@ -141,9 +162,23 @@ const Dashboard: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   whileHover={{ scale: 1.02, y: -2 }}
                   onClick={() => navigate(`/analyzer/${dataset._id}`)}
-                  className="bg-slate-800/40 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-slate-700/50 cursor-pointer hover:border-emerald-500/30 hover:bg-slate-800/60 transition-all group"
+                  className="bg-slate-800/40 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-slate-700/50 cursor-pointer hover:border-emerald-500/30 hover:bg-slate-800/60 transition-all group relative"
                 >
-                  <div className="flex items-center gap-3 mb-4">
+                  {/* Delete Button */}
+                  <button
+                    onClick={(e) => handleDeleteClick(e, dataset._id)}
+                    disabled={deletingId === dataset._id}
+                    className="absolute top-4 right-4 p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed z-10"
+                    title="Delete dataset"
+                  >
+                    {deletingId === dataset._id ? (
+                      <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+
+                  <div className="flex items-center gap-3 mb-4 pr-8">
                     <div className="w-12 h-12 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-lg flex items-center justify-center border border-emerald-500/20 group-hover:border-emerald-500/40 transition-colors">
                       <FileText className="w-6 h-6 text-emerald-400" />
                     </div>
@@ -171,6 +206,75 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleDeleteCancel}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-slate-800 rounded-xl shadow-2xl border border-slate-700 max-w-md w-full p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center border border-red-500/30">
+                      <Trash2 className="w-5 h-5 text-red-400" />
+                    </div>
+                    Delete Dataset
+                  </h3>
+                  <button
+                    onClick={handleDeleteCancel}
+                    className="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <p className="text-slate-300 mb-6">
+                  Are you sure you want to delete this dataset? This action cannot be undone and will permanently remove all associated data, analysis, and chat history.
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDeleteCancel}
+                    disabled={deletingId !== null}
+                    className="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteConfirm}
+                    disabled={deletingId !== null}
+                    className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {deletingId ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

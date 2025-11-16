@@ -1,6 +1,6 @@
 # Data Analysis Frontend
 
-React + TypeScript frontend for the Advanced Data Analyzer Pro application.
+React + TypeScript frontend for Project IDA application.
 
 ## Setup
 

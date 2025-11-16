@@ -15,7 +15,7 @@ import {
   applyCategoricalEncoding,
   applyNormalization,
 } from '../utils/preprocessing';
-import { generateSummary, chatWithGemini } from '../utils/gemini';
+import { generateSummary, chatWithGemini, generateSuggestions } from '../utils/gemini';
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -71,6 +71,19 @@ router.post('/upload', upload.single('file'), async (req: AuthRequest, res: Resp
     });
 
     await dataset.save();
+
+    // Auto-generate summary in background (don't block response)
+    generateSummary(dataset.analysis, undefined, 'intermediate')
+      .then(async (summary) => {
+        dataset.preGeneratedSummary = summary;
+        dataset.preGeneratedSummaryMode = 'intermediate';
+        await dataset.save();
+        console.log(`Pre-generated summary for dataset ${dataset._id}`);
+      })
+      .catch((error) => {
+        console.error('Failed to pre-generate summary:', error);
+        // Don't fail the request if summary generation fails
+      });
 
     res.json({
       datasetId: dataset._id,
@@ -141,6 +154,19 @@ router.post('/:id/analyze', async (req: AuthRequest, res: Response) => {
     };
 
     await dataset.save();
+
+    // Auto-regenerate summary in background after re-analysis (don't block response)
+    generateSummary(dataset.analysis, undefined, 'intermediate')
+      .then(async (summary) => {
+        dataset.preGeneratedSummary = summary;
+        dataset.preGeneratedSummaryMode = 'intermediate';
+        await dataset.save();
+        console.log(`Updated pre-generated summary for dataset ${dataset._id}`);
+      })
+      .catch((error) => {
+        console.error('Failed to update pre-generated summary:', error);
+        // Don't fail the request if summary generation fails
+      });
 
     res.json(dataset.analysis);
   } catch (error: any) {
@@ -228,6 +254,19 @@ router.post('/:id/preprocess', async (req: AuthRequest, res: Response) => {
 
     await dataset.save();
 
+    // Auto-regenerate summary in background after preprocessing (don't block response)
+    generateSummary(dataset.analysis, undefined, 'intermediate')
+      .then(async (summary) => {
+        dataset.preGeneratedSummary = summary;
+        dataset.preGeneratedSummaryMode = 'intermediate';
+        await dataset.save();
+        console.log(`Updated pre-generated summary for dataset ${dataset._id} after preprocessing`);
+      })
+      .catch((error) => {
+        console.error('Failed to update pre-generated summary after preprocessing:', error);
+        // Don't fail the request if summary generation fails
+      });
+
     res.json({
       data: dataset.preprocessedData,
       analysis: dataset.analysis,
@@ -278,31 +317,66 @@ router.post('/:id/summarize', async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Dataset not found' });
     }
 
-    const { prompt, isInitial } = req.body;
+    const { prompt, isInitial, mode = 'intermediate' } = req.body;
     let response: string;
 
     if (isInitial) {
-      // Generate initial summary - use empty prompt to trigger default comprehensive summary
+      // Check if we have a pre-generated summary that matches the mode
+      // If mode matches and no custom prompt, use stored summary for fast response
       const summaryPrompt = prompt && prompt.trim() ? prompt : undefined;
-      response = await generateSummary(dataset.analysis, summaryPrompt);
       
-      // Add to thread
-      dataset.threads.push({
-        role: 'user',
-        content: summaryPrompt || 'Generate a comprehensive automated summary of this dataset analysis',
-        timestamp: new Date(),
-      });
-      dataset.threads.push({
-        role: 'assistant',
-        content: response,
-        timestamp: new Date(),
-      });
+      if (!summaryPrompt && dataset.preGeneratedSummary && dataset.preGeneratedSummaryMode === mode) {
+        // Use pre-generated summary for instant response!
+        response = dataset.preGeneratedSummary;
+        
+        // Add to thread if not already there
+        const alreadyInThread = dataset.threads.some(
+          (msg) => msg.role === 'assistant' && msg.content === response
+        );
+        
+        if (!alreadyInThread) {
+          dataset.threads.push({
+            role: 'user',
+            content: 'Generate a comprehensive automated summary of this dataset analysis',
+            timestamp: new Date(),
+          });
+          dataset.threads.push({
+            role: 'assistant',
+            content: response,
+            timestamp: new Date(),
+          });
+          await dataset.save();
+        }
+      } else {
+        // Generate new summary (different mode or custom prompt)
+        response = await generateSummary(dataset.analysis, summaryPrompt, mode);
+        
+        // Update pre-generated summary if using default prompt
+        if (!summaryPrompt) {
+          dataset.preGeneratedSummary = response;
+          dataset.preGeneratedSummaryMode = mode as 'beginner' | 'intermediate' | 'advanced';
+        }
+        
+        // Add to thread
+        dataset.threads.push({
+          role: 'user',
+          content: summaryPrompt || 'Generate a comprehensive automated summary of this dataset analysis',
+          timestamp: new Date(),
+        });
+        dataset.threads.push({
+          role: 'assistant',
+          content: response,
+          timestamp: new Date(),
+        });
+        await dataset.save();
+      }
     } else {
       // Chat with context
       response = await chatWithGemini(
         dataset.threads,
         dataset.analysis,
-        prompt
+        prompt,
+        mode
       );
 
       dataset.threads.push({
@@ -315,9 +389,8 @@ router.post('/:id/summarize', async (req: AuthRequest, res: Response) => {
         content: response,
         timestamp: new Date(),
       });
+      await dataset.save();
     }
-
-    await dataset.save();
 
     res.json({ response, threads: dataset.threads });
   } catch (error: any) {
@@ -342,6 +415,53 @@ router.get('/:id/threads', async (req: AuthRequest, res: Response) => {
   } catch (error: any) {
     console.error('Get threads error:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get suggestions
+router.get('/:id/suggestions', async (req: AuthRequest, res: Response) => {
+  try {
+    const dataset = await Dataset.findOne({
+      _id: req.params.id,
+      userId: req.userId,
+    });
+
+    if (!dataset) {
+      return res.status(404).json({ error: 'Dataset not found' });
+    }
+
+    const mode = (req.query.mode as string) || 'intermediate';
+    const suggestions = await generateSuggestions(
+      dataset.analysis,
+      dataset.threads,
+      mode as 'beginner' | 'intermediate' | 'advanced'
+    );
+
+    res.json({ suggestions });
+  } catch (error: any) {
+    console.error('Get suggestions error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete dataset
+router.delete('/:id', async (req: AuthRequest, res: Response) => {
+  try {
+    const dataset = await Dataset.findOne({
+      _id: req.params.id,
+      userId: req.userId,
+    });
+
+    if (!dataset) {
+      return res.status(404).json({ error: 'Dataset not found' });
+    }
+
+    await Dataset.deleteOne({ _id: req.params.id, userId: req.userId });
+
+    res.json({ message: 'Dataset deleted successfully' });
+  } catch (error: any) {
+    console.error('Delete dataset error:', error);
+    res.status(500).json({ error: error.message || 'Server error' });
   }
 });
 
@@ -475,7 +595,13 @@ ${JSON.stringify({
 
 Provide insights on data quality improvements, preprocessing effectiveness, and recommendations for ML model training.`;
 
-      summary = await generateSummary(dataset.analysis, summaryPrompt);
+      summary = await generateSummary(dataset.analysis, summaryPrompt, 'intermediate');
+      
+      // Store in pre-generated summary for fast access
+      dataset.preGeneratedSummary = summary;
+      dataset.preGeneratedSummaryMode = 'intermediate';
+      
+      // Also add to threads for conversation history
       dataset.threads.push({
         role: 'user',
         content: 'Generate a comprehensive summary of this automated analysis',

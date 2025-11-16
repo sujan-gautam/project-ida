@@ -15,6 +15,8 @@ export interface IDataset extends Document {
   preprocessedData: any[] | null;
   preprocessingSteps: string[];
   threads: IThreadMessage[];
+  preGeneratedSummary?: string;
+  preGeneratedSummaryMode?: 'beginner' | 'intermediate' | 'advanced';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -73,6 +75,22 @@ const DatasetSchema = new Schema<IDataset>(
     threads: {
       type: [ThreadMessageSchema],
       default: [],
+    },
+    preGeneratedSummary: {
+      type: String,
+      default: null,
+    },
+    preGeneratedSummaryMode: {
+      type: String,
+      required: false,
+      validate: {
+        validator: function(value: any) {
+          // Allow null, undefined, or valid enum values
+          if (value == null) return true;
+          return ['beginner', 'intermediate', 'advanced'].includes(value);
+        },
+        message: 'preGeneratedSummaryMode must be beginner, intermediate, or advanced'
+      }
     },
   },
   {

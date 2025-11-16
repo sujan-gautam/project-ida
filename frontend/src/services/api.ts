@@ -97,17 +97,31 @@ export const datasetAPI = {
   summarize: async (
     id: string,
     prompt: string,
-    isInitial: boolean = false
+    isInitial: boolean = false,
+    mode: 'beginner' | 'intermediate' | 'advanced' = 'intermediate'
   ) => {
     const response = await api.post(`/datasets/${id}/summarize`, {
       prompt,
       isInitial,
+      mode,
     });
     return response.data;
   },
   getThreads: async (id: string): Promise<ThreadMessage[]> => {
     const response = await api.get(`/datasets/${id}/threads`);
     return response.data;
+  },
+  getSuggestions: async (
+    id: string,
+    mode: 'beginner' | 'intermediate' | 'advanced' = 'intermediate'
+  ): Promise<string[]> => {
+    const response = await api.get(`/datasets/${id}/suggestions`, {
+      params: { mode },
+    });
+    return response.data.suggestions;
+  },
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/datasets/${id}`);
   },
 };
 

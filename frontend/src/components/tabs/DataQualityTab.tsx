@@ -39,8 +39,8 @@ const DataQualityTab: React.FC<DataQualityTabProps> = ({
       <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-6 border border-gray-200 relative group">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-2xl font-bold text-gray-800">
-            Infinite Values Detection
-          </h3>
+          Infinite Values Detection
+        </h3>
           {hasInfiniteValues && (
             <button
               onClick={() => setInfiniteFullscreen(true)}
@@ -178,8 +178,8 @@ const DataQualityTab: React.FC<DataQualityTabProps> = ({
       <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-6 border border-gray-200 relative group">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-2xl font-bold text-gray-800">
-            Missing Values Analysis
-          </h3>
+          Missing Values Analysis
+        </h3>
           {Object.values(analysis.columns).some((info) => info.missing > 0) && (
             <button
               onClick={() => setMissingFullscreen(true)}
@@ -329,8 +329,8 @@ const DataQualityTab: React.FC<DataQualityTabProps> = ({
       <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-6 border border-gray-200 relative group">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-2xl font-bold text-gray-800">
-            Duplicate Values Analysis
-          </h3>
+          Duplicate Values Analysis
+        </h3>
           {Object.keys(duplicateStats).length > 0 && (
             <button
               onClick={() => setDuplicateFullscreen(true)}

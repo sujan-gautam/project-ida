@@ -9,6 +9,49 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey);
 
+// Chat mode types
+export type ChatMode = 'beginner' | 'intermediate' | 'advanced';
+
+const getModeInstructions = (mode: ChatMode): string => {
+  switch (mode) {
+    case 'beginner':
+      return `You are a friendly data analysis assistant helping a beginner. 
+- Use simple, non-technical language
+- Avoid jargon and technical terms when possible (or explain them clearly)
+- Provide step-by-step explanations
+- Use analogies and examples
+- Focus on actionable insights that are easy to understand
+- Break down complex concepts into digestible parts
+- Be encouraging and supportive
+- Format responses with clear sections and visual breaks`;
+
+    case 'intermediate':
+      return `You are an experienced data analysis assistant helping someone with intermediate knowledge.
+- Use technical terms but provide brief explanations when needed
+- Balance detailed analysis with practical insights
+- Include relevant statistics and metrics
+- Explain methodologies briefly
+- Focus on actionable recommendations
+- Connect insights to business or practical applications
+- Use professional formatting with good structure`;
+
+    case 'advanced':
+      return `You are an expert data scientist and analyst working with a professional.
+- Use technical terminology freely
+- Provide in-depth statistical and analytical insights
+- Include detailed methodologies and calculations
+- Reference advanced concepts (ML, feature engineering, statistical tests, etc.)
+- Provide comprehensive, production-ready recommendations
+- Include edge cases and advanced considerations
+- Use precise technical language
+- Focus on optimization and best practices
+- Provide detailed code examples or pseudocode when relevant`;
+
+    default:
+      return '';
+  }
+};
+
 // Helper function to build comprehensive dataset summary
 const buildDatasetSummary = (analysis: any): string => {
   const columns = analysis.columns || {};
@@ -95,23 +138,29 @@ ${topCorrelations || 'No significant correlations found (need at least 2 numeric
 
 export const generateSummary = async (
   analysis: any,
-  prompt?: string
+  prompt?: string,
+  mode: ChatMode = 'intermediate'
 ): Promise<string> => {
   try {
     // Use gemini-pro for v1 API compatibility
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const comprehensiveSummary = buildDatasetSummary(analysis);
+    const fullAnalysisContext = JSON.stringify(analysis, null, 2);
+    const modeInstructions = getModeInstructions(mode);
 
     const defaultPrompt = `You are an expert data scientist and analyst. I have provided you with a complete dataset analysis below. Your task is to automatically generate a comprehensive, detailed summary report without asking for additional information.
+
+**Your Communication Style:**
+${modeInstructions}
 
 **IMPORTANT: You have ALL the analysis data you need. Generate a complete summary immediately using Markdown syntax with proper formatting.**
 
 ${comprehensiveSummary}
 
-## Complete Analysis Data (Full JSON):
+## Complete Analysis Data (Full JSON for Deep Context):
 \`\`\`json
-${JSON.stringify(analysis, null, 2)}
+${fullAnalysisContext}
 \`\`\`
 
 ## Your Task - Generate Complete Summary:
@@ -176,13 +225,15 @@ For each column, provide:
 - Include emojis for visual clarity (📊, 🔍, ⚠️, 💡, ✅, 📈, 🎯, etc.)
 
 **CRITICAL INSTRUCTIONS:**
-1. You have been provided with COMPLETE dataset analysis data above
+1. You have been provided with COMPLETE dataset analysis data above (summary + full JSON)
 2. Generate the summary IMMEDIATELY - do not ask for more information
-3. Use ALL the data provided (comprehensive summary + full JSON)
+3. Use ALL the data provided (comprehensive summary + full JSON) for deep context understanding
 4. Be specific with numbers, percentages, and column names from the analysis
 5. Provide actionable recommendations based on the actual data issues found
 6. Include concrete examples from the dataset (column names, statistics, etc.)
-7. Make the summary detailed enough that a data scientist can act on it immediately
+7. Adapt your communication style to ${mode} mode (see instructions above)
+8. Make the summary detailed enough that a user at ${mode} level can act on it immediately
+9. Reference specific data points from the full JSON context for precision
 
 **Start generating the summary now. Do not include any text asking for more information.**`;
 
@@ -209,7 +260,8 @@ For each column, provide:
 export const chatWithGemini = async (
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   analysis: any,
-  userMessage: string
+  userMessage: string,
+  mode: ChatMode = 'intermediate'
 ): Promise<string> => {
   try {
     // Use gemini-pro for v1 API compatibility
@@ -220,20 +272,37 @@ export const chatWithGemini = async (
       .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
       .join('\n\n');
 
-    // Build comprehensive context from analysis
+    // Build comprehensive context from analysis with FULL dataset context
     const comprehensiveSummary = buildDatasetSummary(analysis);
+    
+    // Include full analysis JSON for deep context understanding
+    const fullAnalysisContext = JSON.stringify(analysis, null, 2);
+    
+    const modeInstructions = getModeInstructions(mode);
 
     const context = `You are a data analysis assistant with access to a comprehensive dataset analysis. You remember all previous conversations about this dataset.
 
+**Your Role & Communication Style:**
+${modeInstructions}
+
 **IMPORTANT: Format your response using Markdown with proper headings, lists, code blocks, and emphasis for better readability.**
 
+## Complete Dataset Analysis Context:
+
 ${comprehensiveSummary}
+
+## Full Analysis Data (Complete JSON for Deep Context):
+\`\`\`json
+${fullAnalysisContext}
+\`\`\`
 
 ${conversationHistory ? `\n## Previous Conversation History:\n${conversationHistory}\n\n` : ''}
 
 **Current User Question:** ${userMessage}
 
-Provide a helpful, accurate, and well-formatted Markdown response based on the comprehensive analysis data and conversation history. Use:
+Provide a helpful, accurate, and well-formatted Markdown response based on the comprehensive analysis data and conversation history. 
+
+**Response Guidelines:**
 - **Bold** for important points and metrics
 - *Italic* for emphasis
 - \`code\` for technical terms or column names
@@ -242,9 +311,16 @@ Provide a helpful, accurate, and well-formatted Markdown response based on the c
 - \`\`\`code blocks\`\`\` for statistics or data snippets
 - Headers (##) for major sections
 - Tables for comparing data
-- Emojis for visual clarity
+- Emojis for visual clarity (use appropriately based on mode)
 
-Remember the context from previous messages and format your response professionally.`;
+**Context Awareness:**
+- You have access to the ENTIRE dataset analysis including all columns, statistics, correlations, and quality metrics
+- Reference specific columns, values, and statistics from the analysis
+- Use the full JSON context to provide precise, data-driven insights
+- Remember all previous conversations in this thread
+- Connect insights across different aspects of the data
+
+Remember the context from previous messages and format your response professionally according to the ${mode} mode guidelines.`;
 
     const result = await model.generateContent(context);
     const response = await result.response;
@@ -261,5 +337,69 @@ Remember the context from previous messages and format your response professiona
     } else {
       throw new Error(`Failed to generate response: ${errorMessage}`);
     }
+  }
+};
+
+export const generateSuggestions = async (
+  analysis: any,
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>,
+  mode: ChatMode = 'intermediate'
+): Promise<string[]> => {
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    
+    const comprehensiveSummary = buildDatasetSummary(analysis);
+    const recentMessages = conversationHistory.slice(-6); // Last 3 exchanges
+    const context = recentMessages
+      .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+      .join('\n\n');
+
+    const prompt = `Based on this dataset analysis and recent conversation, generate 5-8 contextual, actionable question suggestions for the user.
+
+Dataset Context:
+${comprehensiveSummary}
+
+Recent Conversation:
+${context || 'No conversation yet - suggest initial exploration questions'}
+
+User Mode: ${mode}
+
+Generate suggestions as a JSON array of strings. Make them:
+- Contextually relevant to the dataset and conversation
+- Actionable and specific
+- Appropriate for ${mode} level
+- Diverse (cover different aspects: quality, statistics, patterns, recommendations)
+- Natural and conversational
+
+Return ONLY a valid JSON array, no other text. Example format: ["question 1", "question 2", ...]`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text().trim();
+    
+    // Extract JSON array from response
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    
+    // Fallback suggestions
+    return [
+      'What are the main data quality issues?',
+      'Show me key statistical insights',
+      'What preprocessing steps do you recommend?',
+      'Are there any notable patterns or correlations?',
+      'What ML models would work best for this data?'
+    ];
+  } catch (error: any) {
+    console.error('Suggestion generation error:', error);
+    // Return fallback suggestions
+    return [
+      'What are the main data quality issues?',
+      'Show me key statistical insights',
+      'What preprocessing steps do you recommend?',
+      'Are there any notable patterns or correlations?',
+      'What ML models would work best for this data?'
+    ];
   }
 };

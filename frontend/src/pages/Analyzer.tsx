@@ -27,6 +27,64 @@ import PreviewTab from '../components/tabs/PreviewTab';
 import AutomationWorkflow from '../components/AutomationWorkflow';
 import SummarizerChat from '../components/SummarizerChat';
 import FullscreenChartModal from '../components/FullscreenChartModal';
+import VideoLogo from '../components/VideoLogo';
+
+// Memoized component for fullscreen analysis content to prevent re-renders
+const AnalysisFullscreenContent = React.memo(({
+  activeTab,
+  onTabChange,
+  tabs,
+  analysis,
+  data,
+  datasetId,
+  onPreprocess,
+  onReset,
+}: {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+  tabs: string[];
+  analysis: any;
+  data: any[];
+  datasetId: string;
+  onPreprocess: () => void;
+  onReset: () => void;
+}) => (
+  <div className="h-full w-full flex flex-col overflow-hidden">
+    {/* Compact Tab Bar */}
+    <div className="flex-shrink-0 bg-slate-800/50">
+      <Tabs
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        tabs={tabs}
+      />
+    </div>
+    {/* Maximized Content Area */}
+    <div className="flex-1 overflow-y-auto p-3 md:p-5 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent bg-slate-900/20 min-h-0">
+      {activeTab === 'overview' && <OverviewTab analysis={analysis} />}
+      {activeTab === 'distributions' && (
+        <DistributionsTab analysis={analysis} data={data} />
+      )}
+      {activeTab === 'correlations' && (
+        <CorrelationsTab analysis={analysis} data={data} />
+      )}
+      {activeTab === 'outliers' && (
+        <OutliersTab analysis={analysis} data={data} />
+      )}
+      {activeTab === 'data-quality' && (
+        <DataQualityTab analysis={analysis} data={data} />
+      )}
+      {activeTab === 'preprocessing' && (
+        <PreprocessingTab
+          datasetId={datasetId}
+          analysis={analysis}
+          onPreprocess={onPreprocess}
+          onReset={onReset}
+        />
+      )}
+      {activeTab === 'preview' && <PreviewTab data={data} />}
+    </div>
+  </div>
+));
 
 const Analyzer: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
@@ -203,17 +261,10 @@ const Analyzer: React.FC = () => {
           </button>
 
           {/* Title and Icon - Centered */}
-          <div className="flex items-center gap-3 flex-1 justify-center">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-              className="relative"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 blur-xl rounded-full"></div>
-              <Activity className="w-8 h-8 text-emerald-400 relative z-10" />
-            </motion.div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-              Data Analyzer Pro
+          <div className="flex flex-col items-center gap-1 flex-1 justify-center">
+            <VideoLogo size="md" />
+            <h1 className="text-xs font-medium bg-gradient-to-r from-white via-slate-100 to-white bg-clip-text text-transparent tracking-wide font-inter antialiased">
+              Project <span className="font-bold">IDA</span>
             </h1>
           </div>
 
@@ -325,44 +376,21 @@ const Analyzer: React.FC = () => {
             {/* Fullscreen Analysis Modal */}
             <FullscreenChartModal
               isOpen={isAnalysisFullscreen}
-              onClose={() => setIsAnalysisFullscreen(false)}
+              onClose={() => {
+                setIsAnalysisFullscreen(false);
+              }}
               title="Data Analysis"
             >
-              <div className="h-full w-full flex flex-col overflow-hidden">
-                {/* Compact Tab Bar */}
-                <div className="flex-shrink-0 bg-slate-800/50">
-                  <Tabs
-                    activeTab={activeTab}
-                    onTabChange={handleTabChange}
-                    tabs={tabs}
-                  />
-                </div>
-                {/* Maximized Content Area */}
-                <div className="flex-1 overflow-y-auto p-3 md:p-5 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent bg-slate-900/20 min-h-0">
-                  {activeTab === 'overview' && <OverviewTab analysis={analysis} />}
-                  {activeTab === 'distributions' && (
-                    <DistributionsTab analysis={analysis} data={data} />
-                  )}
-                  {activeTab === 'correlations' && (
-                    <CorrelationsTab analysis={analysis} data={data} />
-                  )}
-                  {activeTab === 'outliers' && (
-                    <OutliersTab analysis={analysis} data={data} />
-                  )}
-                  {activeTab === 'data-quality' && (
-                    <DataQualityTab analysis={analysis} data={data} />
-                  )}
-                  {activeTab === 'preprocessing' && (
-                    <PreprocessingTab
-                      datasetId={dataset!._id}
-                      analysis={analysis}
-                      onPreprocess={handlePreprocess}
-                      onReset={handleReset}
-                    />
-                  )}
-                  {activeTab === 'preview' && <PreviewTab data={data} />}
-                </div>
-              </div>
+              <AnalysisFullscreenContent
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                tabs={tabs}
+                analysis={analysis}
+                data={data}
+                datasetId={dataset!._id}
+                onPreprocess={handlePreprocess}
+                onReset={handleReset}
+              />
             </FullscreenChartModal>
 
             {/* Chat and Analysis Tabbed View */}
@@ -580,12 +608,13 @@ const Analyzer: React.FC = () => {
                 )}
                 
                 {/* Maximized Content Area */}
-                <div className="flex-1 overflow-y-auto p-2 md:p-3 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent bg-slate-900/20 min-h-0">
+                <div className={`flex-1 overflow-hidden min-h-0 ${activeBottomTab === 'chat' ? '' : 'overflow-y-auto p-2 md:p-3 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent bg-slate-900/20'}`}>
                   {activeBottomTab === 'chat' && (
                     <div className="h-full w-full">
                       <SummarizerChat 
                         datasetId={dataset!._id} 
                         analysis={analysis}
+                        isFullscreen={true}
                         onAutoSummarize={() => {
                           // Scroll to summarizer when auto-summarize is triggered
                           setTimeout(() => {

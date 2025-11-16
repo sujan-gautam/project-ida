@@ -15,6 +15,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import HomepageWorkflow from '../components/HomepageWorkflow';
 import { sessionStorage } from '../utils/sessionStorage';
+import VideoLogo from '../components/VideoLogo';
 
 const Homepage: React.FC = () => {
   const navigate = useNavigate();
@@ -88,21 +89,12 @@ const Homepage: React.FC = () => {
         {/* Navigation */}
         <nav className="container mx-auto px-6 py-6">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <Link to="/">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                  className="relative"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 blur-xl rounded-full"></div>
-                  <Activity className="w-10 h-10 text-emerald-400 relative z-10" />
-                </motion.div>
-              </Link>
-              <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                <Link to="/">Data Analyzer Pro</Link>
+            <Link to="/" className="flex flex-col items-center gap-1">
+              <VideoLogo size="md" />
+              <span className="text-xs font-medium bg-gradient-to-r from-white via-slate-100 to-white bg-clip-text text-transparent tracking-wide font-inter antialiased">
+                Project <span className="font-bold">IDA</span>
               </span>
-            </div>
+            </Link>
             <div className="flex gap-4">
               {isAuthenticated ? (
                 <motion.button
@@ -160,14 +152,14 @@ const Homepage: React.FC = () => {
             <h1 className="text-6xl md:text-7xl font-bold text-white mb-6 leading-tight tracking-tight">
               Replace Manual Data Science
               <span className="block bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                with Intelligent Automation
+                with Insight Driven Automation
               </span>
             </h1>
 
             <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto font-light">
               Production-ready ETL pipelines that transform raw datasets into ML-ready features.
               <span className="block mt-2 text-lg text-slate-400">
-                What takes data scientists hours, we do in seconds.
+                What takes data scientists week, we do in seconds.
               </span>
             </p>
 
@@ -239,7 +231,7 @@ const Homepage: React.FC = () => {
               Ready to Automate Your Data Pipeline?
             </h2>
             <p className="text-slate-400 mb-8 text-lg">
-              Join data scientists who've replaced hours of manual work with intelligent automation
+              Join data scientists who've replaced hours of manual work with Insite Driven Automation
             </p>
             <motion.button
               whileHover={{ scale: 1.02 }}

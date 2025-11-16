@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Database,
   Settings,
@@ -13,7 +13,7 @@ import {
   Loader2,
   ArrowRight,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 interface WorkflowNode {
   id: string;
@@ -26,7 +26,8 @@ interface WorkflowNode {
 
 const HomepageWorkflow: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isInViewport, setIsInViewport] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const nodes: WorkflowNode[] = [
     {
@@ -111,18 +112,46 @@ const HomepageWorkflow: React.FC = () => {
     },
   ];
 
+  // Intersection Observer to detect when component is in viewport
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInViewport(true);
+          }
+        });
+      },
+      {
+        threshold: 0.2, // Start animation when 20% of component is visible
+        rootMargin: '0px',
+      }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        observer.unobserve(containerRef.current);
+      }
+    };
+  }, []);
+
+  // Start animation only when component is in viewport
+  useEffect(() => {
+    if (!isInViewport) return;
+
     const interval = setInterval(() => {
-      setIsAnimating(true);
       setCurrentStep((prev) => {
         const next = (prev + 1) % nodes.length;
         return next;
       });
-      setTimeout(() => setIsAnimating(false), 2000);
-    }, 3000);
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isInViewport]);
 
   const getNodeStatus = (index: number): WorkflowNode['status'] => {
     if (index < currentStep) return 'completed';
@@ -131,7 +160,7 @@ const HomepageWorkflow: React.FC = () => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full" ref={containerRef}>
       <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-8 md:p-12 border border-slate-700/50 overflow-hidden">
         <h2 className="text-4xl md:text-5xl font-bold text-white text-center mb-4 tracking-tight">
           Automated Pipeline Architecture
@@ -161,8 +190,8 @@ const HomepageWorkflow: React.FC = () => {
                     scale: isActive ? 1.05 : 1,
                   }}
                   transition={{ 
-                    delay: index * 0.1,
-                    duration: 0.3,
+                    delay: index * 0.05,
+                    duration: 0.15,
                   }}
                   className="flex flex-col items-center gap-3 relative"
                 >

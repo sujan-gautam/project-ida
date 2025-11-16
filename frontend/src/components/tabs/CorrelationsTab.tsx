@@ -140,8 +140,8 @@ const CorrelationsTab: React.FC<CorrelationsTabProps> = ({
           <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-6 border border-gray-200 relative group">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-800">
-                Correlation Heatmap
-              </h3>
+              Correlation Heatmap
+            </h3>
               <button
                 onClick={() => setHeatmapFullscreen(true)}
                 className="p-2 rounded-lg bg-slate-200/50 hover:bg-slate-300/50 border border-slate-300/50 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100"
@@ -214,8 +214,8 @@ const CorrelationsTab: React.FC<CorrelationsTabProps> = ({
             <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-6 border border-gray-200 relative group">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-bold text-gray-800">
-                  Scatter Plot Analysis
-                </h3>
+                Scatter Plot Analysis
+              </h3>
                 <button
                   onClick={() => setScatterFullscreen(true)}
                   className="p-2 rounded-lg bg-slate-200/50 hover:bg-slate-300/50 border border-slate-300/50 hover:border-emerald-500/50 transition-all opacity-0 group-hover:opacity-100"
