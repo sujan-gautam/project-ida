@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
-  Activity, 
   Zap, 
   BarChart3, 
   Brain, 
@@ -64,13 +63,6 @@ const Homepage: React.FC = () => {
       description: 'Export clean, normalized datasets optimized for machine learning workflows',
       color: 'from-cyan-500 to-blue-500',
     },
-  ];
-
-  const steps = [
-    'Upload your CSV or Excel file',
-    'Automated analysis runs instantly',
-    'AI generates insights and recommendations',
-    'Download preprocessed, ML-ready data',
   ];
 
   return (

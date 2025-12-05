@@ -19,7 +19,6 @@ interface DataQualityTabProps {
 
 const DataQualityTab: React.FC<DataQualityTabProps> = ({
   analysis,
-  data,
 }) => {
   const infiniteValueStats = analysis.infiniteValueStats || {};
   const hasInfiniteValues = analysis.hasInfiniteValues || false;

@@ -125,5 +125,82 @@ export const datasetAPI = {
   },
 };
 
+// Admin APIs
+export const adminAPI = {
+  getDashboard: async () => {
+    const response = await api.get('/admin/dashboard');
+    return response.data;
+  },
+  getUsers: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) => {
+    const response = await api.get('/admin/users', { params });
+    return response.data;
+  },
+  getApiKeys: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    isActive?: boolean;
+  }) => {
+    const response = await api.get('/admin/api-keys', { params });
+    return response.data;
+  },
+  createApiKey: async (data: {
+    userId: string;
+    name: string;
+    description?: string;
+    rateLimit?: { requests: number; window: number };
+    quota?: { total: number | null; used: number; resetDate: string };
+    permissions?: {
+      analyze: boolean;
+      preprocess: boolean;
+      summarize: boolean;
+      export: boolean;
+    };
+  }) => {
+    const response = await api.post('/admin/api-keys', data);
+    return response.data;
+  },
+  updateApiKey: async (id: string, data: {
+    name?: string;
+    description?: string;
+    isActive?: boolean;
+    rateLimit?: { requests: number; window: number };
+    quota?: { total: number | null };
+    permissions?: {
+      analyze?: boolean;
+      preprocess?: boolean;
+      summarize?: boolean;
+      export?: boolean;
+    };
+  }) => {
+    const response = await api.patch(`/admin/api-keys/${id}`, data);
+    return response.data;
+  },
+  deleteApiKey: async (id: string) => {
+    const response = await api.delete(`/admin/api-keys/${id}`);
+    return response.data;
+  },
+  getUsage: async (params?: {
+    startDate?: string;
+    endDate?: string;
+    apiKeyId?: string;
+  }) => {
+    const response = await api.get('/admin/usage', { params });
+    return response.data;
+  },
+  getDatasets: async (params?: {
+    page?: number;
+    limit?: number;
+    userId?: string;
+  }) => {
+    const response = await api.get('/admin/datasets', { params });
+    return response.data;
+  },
+};
+
 export default api;
 

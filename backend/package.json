@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "make-admin": "ts-node scripts/make-admin.ts",
+    "make-admin-quick": "node scripts/quick-make-admin.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.2.1",

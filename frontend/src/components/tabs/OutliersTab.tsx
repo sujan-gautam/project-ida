@@ -7,13 +7,8 @@ interface OutliersTabProps {
   data: any[];
 }
 
-const OutliersTab: React.FC<OutliersTabProps> = ({ analysis, data }) => {
+const OutliersTab: React.FC<OutliersTabProps> = ({ analysis, data: _data }) => {
   const renderBoxPlot = (col: string) => {
-    const values = data
-      .map((row) => parseFloat(row[col]))
-      .filter((v) => !isNaN(v) && isFinite(v))
-      .sort((a, b) => a - b);
-
     const stats = analysis.columns[col].stats;
     if (!stats) return null;
 
@@ -22,10 +17,6 @@ const OutliersTab: React.FC<OutliersTabProps> = ({ analysis, data }) => {
     const q3 = parseFloat(stats.q3);
     const min = parseFloat(stats.min);
     const max = parseFloat(stats.max);
-    const iqr = parseFloat(stats.iqr);
-
-    const lowerWhisker = Math.max(min, q1 - 1.5 * iqr);
-    const upperWhisker = Math.min(max, q3 + 1.5 * iqr);
 
     return (
       <div className="relative h-64 flex items-center justify-center">

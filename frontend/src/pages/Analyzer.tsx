@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Activity,
   Zap,
-  Download,
   Sparkles,
   Brain,
   ArrowLeft,
@@ -46,7 +45,7 @@ const AnalysisFullscreenContent = React.memo(({
   analysis: any;
   data: any[];
   datasetId: string;
-  onPreprocess: () => void;
+  onPreprocess: (newData: any, newAnalysis: Analysis, steps: string[]) => void;
   onReset: () => void;
 }) => (
   <div className="h-full w-full flex flex-col overflow-hidden">
@@ -217,7 +216,7 @@ const Analyzer: React.FC = () => {
     newData: any,
     newAnalysis: Analysis,
     steps: string[],
-    summary: string
+    _summary: string
   ) => {
     handlePreprocess(newData, newAnalysis, steps);
     if (dataset) {

@@ -45,6 +45,7 @@ router.post(
           id: user._id,
           email: user.email,
           name: user.name,
+          isAdmin: user.isAdmin || false,
         },
       });
     } catch (error: any) {
@@ -95,6 +96,7 @@ router.post(
           id: user._id,
           email: user.email,
           name: user.name,
+          isAdmin: user.isAdmin || false,
         },
       });
     } catch (error: any) {

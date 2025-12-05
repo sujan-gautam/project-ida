@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Activity, Upload, LogOut, FileText, Zap, Trash2, X } from 'lucide-react';
+import { Upload, LogOut, FileText, Zap, Trash2, X, Settings, Book } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { datasetAPI } from '../services/api';
 import { Dataset } from '../types';
@@ -95,6 +95,22 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              to="/api-docs"
+              className="px-4 py-2 bg-slate-800/50 backdrop-blur-sm text-white rounded-lg border border-slate-700/50 hover:bg-slate-800/70 hover:border-emerald-500/30 transition-all flex items-center gap-2 text-sm font-medium"
+            >
+              <Book className="w-4 h-4" />
+              API Docs
+            </Link>
+            {(user as any)?.isAdmin && (
+              <button
+                onClick={() => navigate('/admin/dashboard')}
+                className="px-4 py-2 bg-emerald-600/20 backdrop-blur-sm text-emerald-400 rounded-lg border border-emerald-500/30 hover:bg-emerald-600/30 hover:border-emerald-500/50 transition-all flex items-center gap-2 text-sm font-medium"
+              >
+                <Settings className="w-4 h-4" />
+                Admin Panel
+              </button>
+            )}
             <button
               onClick={handleNewDataset}
               className="px-4 py-2 bg-slate-800/50 backdrop-blur-sm text-white rounded-lg border border-slate-700/50 hover:bg-slate-800/70 hover:border-emerald-500/30 transition-all flex items-center gap-2 text-sm font-medium"

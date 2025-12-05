@@ -1,0 +1,80 @@
+name: Docker Compose Integration Test
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          MONGO_ROOT_USERNAME=admin
+          MONGO_ROOT_PASSWORD=testpassword
+          MONGO_DATABASE=data-analysis-test
+          JWT_SECRET=test-secret-key
+          GEMINI_API_KEY=test-api-key
+          VITE_API_URL=http://localhost:5000
+          EOF
+
+      - name: Build images
+        run: |
+          docker compose build
+
+      - name: Start services
+        run: |
+          docker compose up -d
+          docker compose ps
+
+      - name: Wait for services to be healthy
+        run: |
+          timeout=120
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            if docker compose ps | grep -q "healthy"; then
+              echo "Services are healthy"
+              break
+            fi
+            echo "Waiting for services... ($elapsed/$timeout)"
+            sleep 5
+            elapsed=$((elapsed + 5))
+          done
+
+      - name: Run health checks
+        run: |
+          # Backend health check
+          curl -f http://localhost:5000/api/health || exit 1
+          
+          # Frontend health check
+          curl -f http://localhost:80/health || exit 1
+          
+          echo "All health checks passed!"
+
+      - name: Check logs for errors
+        if: always()
+        run: |
+          echo "=== Backend Logs ==="
+          docker compose logs backend | tail -50
+          echo "=== Frontend Logs ==="
+          docker compose logs frontend | tail -50
+          echo "=== MongoDB Logs ==="
+          docker compose logs mongodb | tail -50
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose down -v
+          docker system prune -af
+

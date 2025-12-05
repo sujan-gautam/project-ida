@@ -23,24 +23,6 @@ const removeEmojis = (text: string): string => {
 };
 
 /**
- * Converts markdown text to plain text (removes markdown syntax)
- */
-const markdownToPlainText = (markdown: string): string => {
-  return markdown
-    .replace(/#{1,6}\s+/g, '') // Remove headers
-    .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
-    .replace(/\*(.*?)\*/g, '$1') // Remove italic
-    .replace(/`(.*?)`/g, '$1') // Remove inline code
-    .replace(/```[\s\S]*?```/g, '') // Remove code blocks
-    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Convert links to text
-    .replace(/^\s*[-*+]\s+/gm, '• ') // Convert list items
-    .replace(/^\s*\d+\.\s+/gm, '') // Remove numbered list markers
-    .replace(/>\s+/g, '') // Remove blockquotes
-    .replace(/\n{3,}/g, '\n\n') // Normalize multiple newlines
-    .trim();
-};
-
-/**
  * Parses markdown and converts to DOCX paragraphs
  */
 const markdownToDocxElements = (markdown: string): Paragraph[] => {
@@ -331,7 +313,7 @@ const parseMarkdownForPDF = (content: string): PDFTextElement[] => {
         inTable = true;
         tableRows = [];
       }
-      const cells = line.split('|').map(cell => cell.trim()).filter((cell, idx, arr) => {
+      const cells = line.split('|').map(cell => cell.trim()).filter((_cell, idx, arr) => {
         // Filter out empty cells at start/end from split
         return idx > 0 && idx < arr.length - 1;
       });

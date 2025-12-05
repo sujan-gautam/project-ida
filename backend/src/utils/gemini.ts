@@ -23,7 +23,9 @@ const getModeInstructions = (mode: ChatMode): string => {
 - Focus on actionable insights that are easy to understand
 - Break down complex concepts into digestible parts
 - Be encouraging and supportive
-- Format responses with clear sections and visual breaks`;
+- Format responses with clear sections and visual breaks
+- Give one sentence clear answer for small questions and ask user if they wanna deep dive
+-Try to give short answer one sentence at most`;
 
     case 'intermediate':
       return `You are an experienced data analysis assistant helping someone with intermediate knowledge.

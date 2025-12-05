@@ -125,7 +125,7 @@ const DistributionsTab: React.FC<DistributionsTabProps> = ({
                     }}
                   />
                   <Bar dataKey="count" radius={[8, 8, 0, 0]}>
-                    {chartData.map((entry, index) => (
+                    {chartData.map((_entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={COLORS[index % COLORS.length]}
@@ -155,7 +155,7 @@ const DistributionsTab: React.FC<DistributionsTabProps> = ({
                   }}
                 />
                 <Bar dataKey="count" radius={[8, 8, 0, 0]}>
-                  {chartData.map((entry, index) => (
+                  {chartData.map((_entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}

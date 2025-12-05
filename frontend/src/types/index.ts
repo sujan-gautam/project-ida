@@ -2,6 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  isAdmin?: boolean;
 }
 
 export interface ColumnAnalysis {
@@ -62,5 +63,81 @@ export interface Dataset {
   threads: ThreadMessage[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ApiKey {
+  _id: string;
+  key: string;
+  name: string;
+  description?: string;
+  userId: string;
+  user?: {
+    name: string;
+    email: string;
+  };
+  isActive: boolean;
+  rateLimit: {
+    requests: number;
+    window: number;
+  };
+  quota: {
+    total: number | null;
+    used: number;
+    resetDate: string;
+  };
+  permissions: {
+    analyze: boolean;
+    preprocess: boolean;
+    summarize: boolean;
+    export: boolean;
+  };
+  lastUsedAt?: string;
+  usageCount: number;
+  createdAt: string;
+  updatedAt: string;
+  usage?: {
+    today: number;
+    total: number;
+  };
+}
+
+export interface ApiUsage {
+  _id: string;
+  apiKeyId: string;
+  endpoint: string;
+  method: string;
+  statusCode: number;
+  responseTime: number;
+  ipAddress?: string;
+  userAgent?: string;
+  error?: string;
+  timestamp: string;
+}
+
+export interface AdminDashboard {
+  overview: {
+    totalUsers: number;
+    totalApiKeys: number;
+    activeApiKeys: number;
+    totalDatasets: number;
+    totalApiCalls: number;
+  };
+  today: {
+    apiCalls: number;
+  };
+  thisMonth: {
+    apiCalls: number;
+  };
+  growth: {
+    users: number;
+    apiCalls: number;
+  };
+  metrics: {
+    averageResponseTime: number;
+    errorRate: number;
+  };
+  topEndpoints: Array<{ _id: string; count: number }>;
+  recentUsers: Array<User>;
+  recentApiKeys: Array<ApiKey>;
 }
 
