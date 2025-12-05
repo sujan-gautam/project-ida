@@ -4,7 +4,6 @@ import {
   Key,
   Plus,
   Search,
-  Edit,
   Trash2,
   Copy,
   Eye,
@@ -12,8 +11,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   XCircle,
-  Clock,
-  Activity,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminAPI } from '../../services/api';
@@ -160,11 +157,10 @@ const AdminApiKeys: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-bold text-white">{key.name}</h3>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        key.isActive
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${key.isActive
                           ? 'bg-emerald-500/20 text-emerald-400'
                           : 'bg-slate-700 text-slate-400'
-                      }`}>
+                        }`}>
                         {key.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
@@ -215,11 +211,10 @@ const AdminApiKeys: React.FC = () => {
                   <div className="flex items-center gap-2 ml-4">
                     <button
                       onClick={() => handleToggleActive(key._id, key.isActive)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        key.isActive
+                      className={`p-2 rounded-lg transition-colors ${key.isActive
                           ? 'bg-slate-700 hover:bg-slate-600 text-slate-300'
                           : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                      }`}
+                        }`}
                       title={key.isActive ? 'Deactivate' : 'Activate'}
                     >
                       {key.isActive ? <XCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}

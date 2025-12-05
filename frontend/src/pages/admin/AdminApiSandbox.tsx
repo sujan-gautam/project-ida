@@ -14,7 +14,6 @@ import {
   FileText,
   Loader2,
   RefreshCw,
-  Download,
   Upload,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -98,7 +97,7 @@ const AdminApiSandbox: React.FC = () => {
     }
 
     const startTime = Date.now();
-    
+
     try {
       setLoading(true);
       setResponse(null);
@@ -107,12 +106,12 @@ const AdminApiSandbox: React.FC = () => {
 
       // Get base API URL - handle both with and without /api suffix
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      
+
       // Remove trailing /api if present since endpoints already include /api/v1
       let API_BASE = baseUrl.replace(/\/api\/?$/, '');
       // Ensure base URL doesn't have trailing slash
       API_BASE = API_BASE.replace(/\/$/, '');
-      
+
       // Build URL - endpoints already include /api/v1, so just append to base
       // Example: 'http://localhost:5000' + '/api/v1/analyze' = 'http://localhost:5000/api/v1/analyze'
       let url = `${API_BASE}${selectedEndpoint}`;
@@ -191,7 +190,6 @@ const AdminApiSandbox: React.FC = () => {
 
       toast.success(`Request successful! (${time}ms)`);
     } catch (error: any) {
-      const endTime = Date.now();
       const time = Date.now() - startTime;
 
       setStatusCode(error.response?.status || 500);
@@ -248,7 +246,7 @@ const AdminApiSandbox: React.FC = () => {
 
     const apiKey = apiKeys.find((k) => k._id === selectedApiKey);
     const key = apiKey?.key || 'ida_your_api_key_here';
-    
+
     // Get base URL for examples - remove /api suffix if present
     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     let API_BASE = baseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
@@ -556,11 +554,10 @@ const AdminApiSandbox: React.FC = () => {
               </div>
               {statusCode && (
                 <div className="mb-4 flex items-center gap-4">
-                  <div className={`px-3 py-1 rounded-lg font-bold text-sm flex items-center gap-2 ${
-                    statusCode >= 200 && statusCode < 300
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-red-500/20 text-red-400'
-                  }`}>
+                  <div className={`px-3 py-1 rounded-lg font-bold text-sm flex items-center gap-2 ${statusCode >= 200 && statusCode < 300
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-red-500/20 text-red-400'
+                    }`}>
                     {statusCode >= 200 && statusCode < 300 ? (
                       <CheckCircle2 className="w-4 h-4" />
                     ) : (
@@ -619,16 +616,14 @@ const AdminApiSandbox: React.FC = () => {
                       className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className={`text-xs font-medium px-2 py-1 rounded ${
-                          item.method === 'GET' ? 'bg-blue-500/20 text-blue-400' :
+                        <span className={`text-xs font-medium px-2 py-1 rounded ${item.method === 'GET' ? 'bg-blue-500/20 text-blue-400' :
                           item.method === 'POST' ? 'bg-green-500/20 text-green-400' :
-                          'bg-purple-500/20 text-purple-400'
-                        }`}>
+                            'bg-purple-500/20 text-purple-400'
+                          }`}>
                           {item.method}
                         </span>
-                        <span className={`text-xs font-medium ${
-                          item.success ? 'text-emerald-400' : 'text-red-400'
-                        }`}>
+                        <span className={`text-xs font-medium ${item.success ? 'text-emerald-400' : 'text-red-400'
+                          }`}>
                           {item.statusCode}
                         </span>
                       </div>

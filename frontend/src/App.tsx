@@ -35,7 +35,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   
@@ -49,7 +49,7 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({
       try {
         // Try to access admin endpoint to verify admin status
         const token = localStorage.getItem('token');
-        const response = await axios.get(
+        await axios.get(
           `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/dashboard`,
           {
             headers: {

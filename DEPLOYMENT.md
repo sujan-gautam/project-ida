@@ -366,5 +366,60 @@ docker image prune -a
 For issues or questions:
 - Check logs: `docker compose logs`
 - Review GitHub Issues
-- Contact DevOps team
+
+## Vercel (Frontend) & Railway (Backend) Deployment
+
+### Backend Deployment (Railway)
+
+1.  **Create a Railway Project:**
+    *   Go to [Railway](https://railway.app/) and create a new project.
+    *   Select "Deploy from GitHub repo" and choose this repository.
+    *   Since this is a monorepo, you need to configure the Root Directory.
+
+2.  **Configure Service:**
+    *   Go to Settings > General > Root Directory and set it to `/backend`.
+    *   Railway should automatically detect Node.js.
+    *   The build command `npm run build` (which runs `tsc`) and start command `npm start` (which runs `node dist/server.js`) should be picked up automatically from `package.json`.
+
+3.  **Environment Variables:**
+    *   Go to the "Variables" tab.
+    *   Add the following variables:
+        *   `PORT`: `5000` (or let Railway assign one and use `0.0.0.0` if needed, but `process.env.PORT` is handled in code).
+        *   `MONGODB_URI`: Your MongoDB connection string (you can provision a MongoDB service in Railway and link it).
+        *   `JWT_SECRET`: A strong secret key.
+        *   `GEMINI_API_KEY`: Your Google Gemini API key.
+        *   Any other variables from `.env`.
+
+4.  **Deploy:**
+    *   Railway will automatically build and deploy.
+    *   Once deployed, copy the provided public URL (e.g., `https://data-analysis-backend-production.up.railway.app`).
+
+### Frontend Deployment (Vercel)
+
+1.  **Create a Vercel Project:**
+    *   Go to [Vercel](https://vercel.com/) and add a new project.
+    *   Import this repository.
+
+2.  **Configure Project:**
+    *   **Framework Preset:** Vite
+    *   **Root Directory:** `frontend` (Edit this in the project settings during import).
+    *   **Build Command:** `npm run build` (default is correct).
+    *   **Output Directory:** `dist` (default is correct).
+
+3.  **Environment Variables:**
+    *   Go to "Environment Variables".
+    *   Add `VITE_API_URL`.
+    *   **Value:** The URL of your deployed Railway backend **with `/api` appended** (e.g., `https://data-analysis-backend-production.up.railway.app/api`).
+    *   *Note: Ensure you do NOT have a trailing slash after `/api` unless your code expects it, but usually standardizing on no trailing slash is best.*
+
+4.  **Deploy:**
+    *   Click "Deploy".
+    *   Vercel will build and deploy your frontend.
+    *   The `vercel.json` file in the `frontend` directory handles SPA routing (rewrites to `index.html`).
+
+### Verification
+
+1.  Open your Vercel URL.
+2.  Try to log in or sign up.
+3.  Check the Network tab in DevTools to ensure requests are going to your Railway backend.
 
