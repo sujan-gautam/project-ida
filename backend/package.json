@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "./node_modules/.bin/tsc",
+    "build": "tsc",
     "start": "node dist/server.js",
     "make-admin": "ts-node scripts/make-admin.ts",
     "make-admin-quick": "node scripts/quick-make-admin.js"
