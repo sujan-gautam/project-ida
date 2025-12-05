@@ -2,13 +2,14 @@ import express, { Response } from 'express';
 import multer from 'multer';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
-import { apiKeyAuth, checkPermission, ApiKeyRequest } from '../../middleware/apiKeyAuth';
+import { apiKeyAuth, requirePermission as checkPermission, ApiRequest as ApiKeyRequest } from '../../middleware/apiAuth';
 import {
   analyzeData,
   detectInfiniteValues,
   detectDuplicates,
 } from '../../utils/analysis';
 import {
+  preprocessData,
   replaceInfiniteWithNaN,
   handleMissingValues,
   applyCategoricalEncoding,
@@ -19,7 +20,7 @@ import { generateSummary, chatWithGemini } from '../../utils/gemini';
 const router = express.Router();
 router.use(apiKeyAuth);
 
-const upload = multer({ 
+const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB
@@ -38,7 +39,7 @@ router.post(
   async (req: ApiKeyRequest, res: Response) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'No file uploaded',
           code: 'FILE_MISSING'
         });
@@ -63,7 +64,7 @@ router.post(
       }
 
       if (jsonData.length === 0) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'Empty dataset',
           code: 'EMPTY_DATASET'
         });
@@ -79,8 +80,8 @@ router.post(
         data: {
           analysis: {
             ...analysis,
-            hasInfiniteValues: hasInfinite.hasInfiniteValues,
-            infiniteValueStats: hasInfinite.stats,
+            hasInfiniteValues: hasInfinite.hasInf,
+            infiniteValueStats: hasInfinite.infStats,
             duplicateStats,
           },
           metadata: {
@@ -96,10 +97,10 @@ router.post(
       res.json(response);
     } catch (error: any) {
       console.error('External API analyze error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Analysis failed',
         code: 'ANALYSIS_ERROR',
-        message: error.message 
+        message: error.message
       });
     }
   }
@@ -118,51 +119,41 @@ router.post(
       const { data, options } = req.body;
 
       if (!Array.isArray(data) || data.length === 0) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'Invalid dataset',
           code: 'INVALID_DATASET'
         });
       }
 
-      let processedData = [...data];
+      // Analyze first to get column types
+      const analysis = analyzeData(data);
 
-      // Apply preprocessing steps
-      if (options?.handleInfinite) {
-        processedData = replaceInfiniteWithNaN(processedData);
-      }
-
-      if (options?.handleMissing) {
-        const method = options.missingValueMethod || 'mean';
-        processedData = handleMissingValues(processedData, method);
-      }
-
-      if (options?.encodeCategorical) {
-        const method = options.encodingMethod || 'one-hot';
-        processedData = applyCategoricalEncoding(processedData, method);
-      }
-
-      if (options?.normalize) {
-        const method = options.normalizationMethod || 'standard';
-        processedData = applyNormalization(processedData, method);
-      }
+      // Use the main preprocessing function
+      const processedData = await preprocessData(data, {
+        handleInfinite: options?.handleInfinite,
+        missingValueMethod: options?.handleMissing ? (options.missingValueMethod || 'mean') : undefined,
+        encodingMethod: options?.encodeCategorical ? (options.encodingMethod || 'one-hot') : undefined,
+        normalizationMethod: options?.normalize ? (options.normalizationMethod || 'standard') : undefined,
+        analysis
+      });
 
       // Re-analyze after preprocessing
-      const analysis = analyzeData(processedData);
+      const finalAnalysis = analyzeData(processedData);
 
       res.json({
         success: true,
         data: {
           processedData,
-          analysis,
+          analysis: finalAnalysis,
           preprocessingSteps: Object.keys(options || {}).filter(k => options[k]),
         },
       });
     } catch (error: any) {
       console.error('External API preprocess error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Preprocessing failed',
         code: 'PREPROCESS_ERROR',
-        message: error.message 
+        message: error.message
       });
     }
   }
@@ -181,7 +172,7 @@ router.post(
       const { analysis, prompt, mode } = req.body;
 
       if (!analysis) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'Analysis data required',
           code: 'ANALYSIS_MISSING'
         });
@@ -203,10 +194,10 @@ router.post(
       });
     } catch (error: any) {
       console.error('External API summarize error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Summary generation failed',
         code: 'SUMMARY_ERROR',
-        message: error.message 
+        message: error.message
       });
     }
   }
@@ -225,7 +216,7 @@ router.post(
       const { message, analysis, context } = req.body;
 
       if (!message) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'Message required',
           code: 'MESSAGE_MISSING'
         });
@@ -242,10 +233,10 @@ router.post(
       });
     } catch (error: any) {
       console.error('External API chat error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Chat failed',
         code: 'CHAT_ERROR',
-        message: error.message 
+        message: error.message
       });
     }
   }

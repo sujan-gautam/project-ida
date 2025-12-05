@@ -1,5 +1,5 @@
-import _ from 'lodash';
 import { AnalysisResult } from './analysis';
+import _ from 'lodash';
 
 export const replaceInfiniteWithNaN = (data: any[]) => {
   return data.map((row) => {
@@ -190,9 +190,9 @@ export const applyNormalization = (
             ...row,
             [col]:
               !isNaN(row[col]) &&
-              row[col] !== null &&
-              row[col] !== '' &&
-              isFinite(row[col])
+                row[col] !== null &&
+                row[col] !== '' &&
+                isFinite(row[col])
                 ? (Number(row[col]) - min) / range
                 : row[col],
           }));
@@ -217,9 +217,9 @@ export const applyNormalization = (
             ...row,
             [col]:
               !isNaN(row[col]) &&
-              row[col] !== null &&
-              row[col] !== '' &&
-              isFinite(row[col])
+                row[col] !== null &&
+                row[col] !== '' &&
+                isFinite(row[col])
                 ? (Number(row[col]) - mean) / std
                 : row[col],
           }));
@@ -229,6 +229,65 @@ export const applyNormalization = (
   }
 
   return normalizedData;
+};
+
+export const preprocessData = async (
+  data: any[],
+  options: {
+    handleInfinite?: boolean;
+    missingValueMethod?: string;
+    encodingMethod?: string;
+    normalizationMethod?: string;
+    analysis?: AnalysisResult;
+  }
+) => {
+  let processedData = [...data];
+
+  // 1. Handle Infinite Values
+  if (options.handleInfinite) {
+    processedData = replaceInfiniteWithNaN(processedData);
+  }
+
+  // 2. Handle Missing Values
+  if (options.missingValueMethod && options.analysis) {
+    processedData = handleMissingValues(
+      processedData,
+      options.missingValueMethod,
+      options.analysis
+    );
+  }
+
+  // 3. Categorical Encoding
+  if (options.encodingMethod && options.analysis) {
+    const categoricalCols = Object.entries(options.analysis.columns)
+      .filter(([_, col]) => col.type === 'categorical')
+      .map(([name, _]) => name);
+
+    if (categoricalCols.length > 0) {
+      processedData = applyCategoricalEncoding(
+        processedData,
+        options.encodingMethod,
+        categoricalCols
+      );
+    }
+  }
+
+  // 4. Normalization
+  if (options.normalizationMethod && options.analysis) {
+    const numericCols = Object.entries(options.analysis.columns)
+      .filter(([_, col]) => col.type === 'numeric')
+      .map(([name, _]) => name);
+
+    if (numericCols.length > 0) {
+      processedData = applyNormalization(
+        processedData,
+        options.normalizationMethod,
+        numericCols
+      );
+    }
+  }
+
+  return processedData;
 };
 
 

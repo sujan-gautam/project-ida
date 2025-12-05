@@ -158,21 +158,36 @@ router.post(
 
       let processedData = jsonData;
 
+      // Analyze data first for preprocessing context
+      const initialAnalysis = analyzeData(processedData);
+
       // Apply preprocessing steps
       if (handleInfinite === 'true' || handleInfinite === true) {
         processedData = replaceInfiniteWithNaN(processedData);
       }
 
       if (handleMissing === 'true' || handleMissing === true) {
-        processedData = handleMissingValues(processedData, missingMethod || 'mean');
+        processedData = handleMissingValues(
+          processedData,
+          missingMethod || 'mean',
+          initialAnalysis
+        );
       }
 
       if (encodingMethod && encodingMethod !== 'none') {
-        processedData = applyCategoricalEncoding(processedData, encodingMethod);
+        processedData = applyCategoricalEncoding(
+          processedData,
+          encodingMethod,
+          initialAnalysis.categoricalColumns
+        );
       }
 
       if (normalizationMethod && normalizationMethod !== 'none') {
-        processedData = applyNormalization(processedData, normalizationMethod);
+        processedData = applyNormalization(
+          processedData,
+          normalizationMethod,
+          initialAnalysis.numericColumns
+        );
       }
 
       // Re-analyze processed data
@@ -321,7 +336,7 @@ router.post(
       const analysis = analyzeData(jsonData);
 
       // Chat with AI
-      const response = await chatWithGemini(analysis, message, history);
+      const response = await chatWithGemini(message, analysis, history);
 
       res.json({
         success: true,
@@ -347,7 +362,7 @@ router.get('/usage', async (req: ApiRequest, res: Response) => {
     const ApiKey = (await import('../models/ApiKey')).default;
 
     const apiKey = await ApiKey.findById(req.apiKey?._id);
-    
+
     if (!apiKey) {
       return res.status(404).json({
         error: 'API key not found',
@@ -369,16 +384,16 @@ router.get('/usage', async (req: ApiRequest, res: Response) => {
     // Calculate stats
     const stats = {
       totalRequests: apiKey.usageCount,
-      monthlyUsage: apiKey.monthlyUsage,
-      monthlyLimit: apiKey.monthlyLimit,
+      monthlyUsage: apiKey.quota.used,
+      monthlyLimit: apiKey.quota.total,
       rateLimit: apiKey.rateLimit,
       lastUsedAt: apiKey.lastUsedAt,
-      recentUsage: usage.map((u) => ({
+      recentUsage: usage.map((u: any) => ({
         endpoint: u.endpoint,
         method: u.method,
         statusCode: u.statusCode,
         responseTime: u.responseTime,
-        timestamp: u.createdAt,
+        timestamp: u.createdAt || u.timestamp,
       })),
     };
 

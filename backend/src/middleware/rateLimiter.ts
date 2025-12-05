@@ -54,11 +54,11 @@ export const apiRateLimiter = async (
   }
 
   // Check rate limit
-  const rateLimit = apiReq.apiKey.rateLimit;
-  
+  const rateLimit = apiReq.apiKey.rateLimit.requests;
+
   if (limitData.count >= rateLimit) {
     const retryAfter = Math.ceil((limitData.resetTime - now) / 1000);
-    
+
     return res.status(429).json({
       error: 'Rate limit exceeded',
       message: `Rate limit of ${rateLimit} requests per minute exceeded. Please try again in ${retryAfter} seconds.`,
@@ -102,12 +102,12 @@ export const checkMonthlyLimit = async (
     }
 
     // Check monthly limit
-    if (apiKey.monthlyUsage >= apiKey.monthlyLimit) {
+    if (apiKey.quota.total !== null && apiKey.quota.used >= apiKey.quota.total) {
       return res.status(429).json({
         error: 'Monthly limit exceeded',
-        message: `Monthly usage limit of ${apiKey.monthlyLimit} requests has been reached. Please upgrade your plan or wait until next month.`,
-        monthlyLimit: apiKey.monthlyLimit,
-        monthlyUsage: apiKey.monthlyUsage,
+        message: `Monthly usage limit of ${apiKey.quota.total} requests has been reached. Please upgrade your plan or wait until next month.`,
+        monthlyLimit: apiKey.quota.total,
+        monthlyUsage: apiKey.quota.used,
       });
     }
 

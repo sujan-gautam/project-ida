@@ -324,16 +324,16 @@ router.post('/:id/summarize', async (req: AuthRequest, res: Response) => {
       // Check if we have a pre-generated summary that matches the mode
       // If mode matches and no custom prompt, use stored summary for fast response
       const summaryPrompt = prompt && prompt.trim() ? prompt : undefined;
-      
+
       if (!summaryPrompt && dataset.preGeneratedSummary && dataset.preGeneratedSummaryMode === mode) {
         // Use pre-generated summary for instant response!
         response = dataset.preGeneratedSummary;
-        
+
         // Add to thread if not already there
         const alreadyInThread = dataset.threads.some(
           (msg) => msg.role === 'assistant' && msg.content === response
         );
-        
+
         if (!alreadyInThread) {
           dataset.threads.push({
             role: 'user',
@@ -350,13 +350,13 @@ router.post('/:id/summarize', async (req: AuthRequest, res: Response) => {
       } else {
         // Generate new summary (different mode or custom prompt)
         response = await generateSummary(dataset.analysis, summaryPrompt, mode);
-        
+
         // Update pre-generated summary if using default prompt
         if (!summaryPrompt) {
           dataset.preGeneratedSummary = response;
           dataset.preGeneratedSummaryMode = mode as 'beginner' | 'intermediate' | 'advanced';
         }
-        
+
         // Add to thread
         dataset.threads.push({
           role: 'user',
@@ -495,17 +495,18 @@ router.post('/:id/automate', async (req: AuthRequest, res: Response) => {
     steps.push(`Data validation: Detected ${initialAnalysis.columnCount} columns with type analysis`);
 
     // Step 2: Handle infinite values
-    if (dataset.analysis?.hasInfiniteValues || initialAnalysis.hasInfiniteValues) {
+    const { hasInf: hasInfiniteValuesDetected } = detectInfiniteValues(data);
+    if (dataset.analysis?.hasInfiniteValues || hasInfiniteValuesDetected) {
       const beforeCount = data.reduce((sum, row) => {
         return sum + Object.values(row).filter(v => typeof v === 'number' && !isFinite(v)).length;
       }, 0);
-      
+
       data = replaceInfiniteWithNaN(data);
-      
+
       const afterCount = data.reduce((sum, row) => {
         return sum + Object.values(row).filter(v => typeof v === 'number' && !isFinite(v)).length;
       }, 0);
-      
+
       executionMetrics.infiniteValuesReplaced = beforeCount - afterCount;
       steps.push(`Replaced ${executionMetrics.infiniteValuesReplaced} infinite values with NaN`);
     }
@@ -515,11 +516,11 @@ router.post('/:id/automate', async (req: AuthRequest, res: Response) => {
     const missingValueStats = Object.entries(analysisAfterInf.columns)
       .filter(([_, info]) => info.missing > 0)
       .map(([col, info]) => ({ col, count: info.missing }));
-    
+
     if (missingValueStats.length > 0) {
       // Smart filling: median for numeric, mode for categorical
       data = handleMissingValues(data, 'fillMedian', analysisAfterInf);
-      
+
       const totalMissing = missingValueStats.reduce((sum, stat) => sum + stat.count, 0);
       executionMetrics.missingValuesFilled = totalMissing;
       steps.push(`Filled ${totalMissing} missing values across ${missingValueStats.length} columns using smart imputation`);
@@ -587,20 +588,20 @@ Pipeline Metrics:
 
 Final Dataset Statistics:
 ${JSON.stringify({
-  rowCount: finalAnalysis.rowCount,
-  columnCount: finalAnalysis.columnCount,
-  numericColumns: finalAnalysis.numericColumns.length,
-  categoricalColumns: finalAnalysis.categoricalColumns.length,
-}, null, 2)}
+        rowCount: finalAnalysis.rowCount,
+        columnCount: finalAnalysis.columnCount,
+        numericColumns: finalAnalysis.numericColumns.length,
+        categoricalColumns: finalAnalysis.categoricalColumns.length,
+      }, null, 2)}
 
 Provide insights on data quality improvements, preprocessing effectiveness, and recommendations for ML model training.`;
 
       summary = await generateSummary(dataset.analysis, summaryPrompt, 'intermediate');
-      
+
       // Store in pre-generated summary for fast access
       dataset.preGeneratedSummary = summary;
       dataset.preGeneratedSummaryMode = 'intermediate';
-      
+
       // Also add to threads for conversation history
       dataset.threads.push({
         role: 'user',

@@ -1,6 +1,6 @@
 import express, { Response } from 'express';
 import multer from 'multer';
-import { authenticateApiKey, trackApiUsage, requirePermission, ApiKeyRequest } from '../middleware/apiKeyAuth';
+import { apiKeyAuth as authenticateApiKey, trackApiUsage, requirePermission, ApiRequest as ApiKeyRequest } from '../middleware/apiAuth';
 import { analyzeData } from '../utils/analysis';
 import { preprocessData } from '../utils/preprocessing';
 import { generateSummary } from '../utils/gemini';
@@ -41,12 +41,37 @@ router.post(
       const { name } = req.body;
       const file = req.file;
 
+      // Parse CSV/Excel file
+      let parsedData: any[] = [];
+      if (file.mimetype === 'text/csv' || file.mimetype === 'application/vnd.ms-excel') {
+        const csvContent = file.buffer.toString('utf-8');
+        const Papa = (await import('papaparse')).default;
+        const result = Papa.parse(csvContent, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+        });
+        parsedData = result.data;
+      } else if (
+        file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      ) {
+        const XLSX = (await import('xlsx')).default;
+        const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        parsedData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+      } else {
+        return res.status(400).json({
+          error: 'Invalid file type',
+          message: 'Please upload a CSV or Excel file',
+        });
+      }
+
       // Analyze the data
-      const analysis = await analyzeData(file.buffer, file.originalname);
+      const analysis = analyzeData(parsedData);
 
       // Create dataset record
       const dataset = await Dataset.create({
-        userId: req.apiKey.userId,
+        userId: req.apiKey?.userId,
         name: name || file.originalname,
         fileName: file.originalname,
         fileSize: file.size,
@@ -89,7 +114,7 @@ router.post(
       // Find dataset (must belong to API key owner)
       const dataset = await Dataset.findOne({
         _id: datasetId,
-        userId: req.apiKey.userId,
+        userId: req.apiKey?.userId,
       });
 
       if (!dataset) {
@@ -154,7 +179,7 @@ router.get(
 
       const dataset = await Dataset.findOne({
         _id: datasetId,
-        userId: req.apiKey.userId,
+        userId: req.apiKey?.userId,
       });
 
       if (!dataset) {
@@ -199,7 +224,7 @@ router.post(
 
       const dataset = await Dataset.findOne({
         _id: datasetId,
-        userId: req.apiKey.userId,
+        userId: req.apiKey?.userId,
       });
 
       if (!dataset || !dataset.analysis) {
@@ -265,7 +290,7 @@ router.post(
 router.get('/datasets', async (req: ApiKeyRequest, res: Response) => {
   try {
     const datasets = await Dataset.find({
-      userId: req.apiKey.userId,
+      userId: req.apiKey?.userId,
     })
       .select('_id name fileName fileSize createdAt updatedAt')
       .sort({ createdAt: -1 })
@@ -297,7 +322,16 @@ router.get('/usage', async (req: ApiKeyRequest, res: Response) => {
     const ApiUsage = (await import('../models/ApiUsage')).default;
     const ApiKey = (await import('../models/ApiKey')).default;
 
-    const apiKey = await ApiKey.findById(req.apiKeyId);
+    const apiKeyId = req.apiKey?._id;
+
+    if (!apiKeyId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'API key not found',
+      });
+    }
+
+    const apiKey = await ApiKey.findById(apiKeyId);
 
     if (!apiKey) {
       return res.status(404).json({
@@ -312,18 +346,18 @@ router.get('/usage', async (req: ApiKeyRequest, res: Response) => {
 
     const [todayUsage, monthUsage, totalUsage, recentCalls] = await Promise.all([
       ApiUsage.countDocuments({
-        apiKeyId: req.apiKeyId,
+        apiKeyId: apiKeyId,
         timestamp: { $gte: today },
       }),
       ApiUsage.countDocuments({
-        apiKeyId: req.apiKeyId,
+        apiKeyId: apiKeyId,
         timestamp: { $gte: thisMonth },
       }),
       ApiUsage.countDocuments({
-        apiKeyId: req.apiKeyId,
+        apiKeyId: apiKeyId,
       }),
       ApiUsage.find({
-        apiKeyId: req.apiKeyId,
+        apiKeyId: apiKeyId,
       })
         .sort({ timestamp: -1 })
         .limit(10)

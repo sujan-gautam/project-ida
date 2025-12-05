@@ -9,8 +9,16 @@ export interface ApiRequest extends Request {
     _id: string;
     userId: string;
     name: string;
-    rateLimit: number;
-    permissions: string[];
+    rateLimit: {
+      requests: number;
+      window: number;
+    };
+    permissions: {
+      analyze: boolean;
+      preprocess: boolean;
+      summarize: boolean;
+      export: boolean;
+    };
   };
 }
 
@@ -74,13 +82,7 @@ export const apiKeyAuth = async (
       });
     }
 
-    // Check if key has expired
-    if (matchedKey.expiresAt && new Date() > matchedKey.expiresAt) {
-      return res.status(401).json({
-        error: 'API key expired',
-        message: 'This API key has expired. Please generate a new one.',
-      });
-    }
+
 
     // Attach API key info to request
     (req as ApiRequest).apiKey = {
@@ -114,7 +116,7 @@ export const apiKeyAuth = async (
 export const requirePermission = (permission: string) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const apiReq = req as ApiRequest;
-    
+
     if (!apiReq.apiKey) {
       return res.status(401).json({
         error: 'Unauthorized',
@@ -122,7 +124,7 @@ export const requirePermission = (permission: string) => {
       });
     }
 
-    if (!apiReq.apiKey.permissions.includes(permission)) {
+    if (!apiReq.apiKey.permissions[permission as keyof typeof apiReq.apiKey.permissions]) {
       return res.status(403).json({
         error: 'Permission denied',
         message: `This API key does not have the '${permission}' permission`,
@@ -146,14 +148,14 @@ export const trackApiUsage = async (
   const originalJson = res.json.bind(res);
   res.json = function (body: any) {
     const responseTime = Date.now() - startTime;
-    
+
     // Track usage asynchronously (don't block response)
     if (apiReq.apiKey) {
       trackUsageAsync(apiReq, req, res, responseTime, body).catch(
         (error) => console.error('Usage tracking error:', error)
       );
     }
-    
+
     return originalJson(body);
   };
 

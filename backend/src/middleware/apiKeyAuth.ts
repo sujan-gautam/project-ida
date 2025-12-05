@@ -73,9 +73,9 @@ export const authenticateApiKey = async (
     const rateLimitKey = `${keyDoc._id}:${req.path}`;
     const now = Date.now();
     const windowMs = keyDoc.rateLimit.window * 1000;
-    
+
     let rateLimitEntry = rateLimitStore.get(rateLimitKey);
-    
+
     if (!rateLimitEntry || rateLimitEntry.resetTime < now) {
       // New window
       rateLimitEntry = {
@@ -85,7 +85,7 @@ export const authenticateApiKey = async (
       rateLimitStore.set(rateLimitKey, rateLimitEntry);
     } else {
       rateLimitEntry.count++;
-      
+
       if (rateLimitEntry.count > keyDoc.rateLimit.requests) {
         return res.status(429).json({
           error: 'Rate limit exceeded',
@@ -125,7 +125,7 @@ export const trackApiUsage = async (
   const originalJson = res.json.bind(res);
   res.json = function (body: any) {
     const responseTime = Date.now() - startTime;
-    
+
     // Track usage asynchronously (don't block response)
     trackUsageAsync(req, res, responseTime, body);
 
@@ -165,9 +165,8 @@ async function trackUsageAsync(
     // Update API key usage
     const ApiKey = (await import('../models/ApiKey')).default;
     await ApiKey.findByIdAndUpdate(req.apiKeyId, {
-      $inc: { usageCount: 1 },
+      $inc: { usageCount: 1, 'quota.used': 1 },
       lastUsedAt: new Date(),
-      $inc: { 'quota.used': 1 },
     });
   } catch (error: any) {
     console.error('Error tracking API usage:', error);

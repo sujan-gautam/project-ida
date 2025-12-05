@@ -22,21 +22,21 @@ router.get('/', async (req: AuthRequest, res: Response) => {
       data: apiKeys.map(key => ({
         id: key._id,
         name: key.name,
-        keyPrefix: key.keyPrefix,
+        // keyPrefix: key.keyPrefix,
         isActive: key.isActive,
         lastUsedAt: key.lastUsedAt,
         usageCount: key.usageCount,
         rateLimit: key.rateLimit,
-        expiresAt: key.expiresAt,
+        // expiresAt: key.expiresAt,
         permissions: key.permissions,
-        metadata: key.metadata,
+        // metadata: key.metadata,
         createdAt: key.createdAt,
         updatedAt: key.updatedAt,
       })),
     });
   } catch (error: any) {
     console.error('Get API keys error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch API keys',
       code: 'FETCH_ERROR'
     });
@@ -86,19 +86,19 @@ router.post(
           id: apiKey._id,
           name: apiKey.name,
           key: plainKey, // Only returned once!
-          keyPrefix: apiKey.keyPrefix,
+          // keyPrefix: apiKey.keyPrefix,
           isActive: apiKey.isActive,
           rateLimit: apiKey.rateLimit,
-          expiresAt: apiKey.expiresAt,
+          // expiresAt: apiKey.expiresAt,
           permissions: apiKey.permissions,
-          metadata: apiKey.metadata,
+          // metadata: apiKey.metadata,
           createdAt: apiKey.createdAt,
           warning: 'Save this API key securely. It will not be shown again.',
         },
       });
     } catch (error: any) {
       console.error('Create API key error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to create API key',
         code: 'CREATE_ERROR'
       });
@@ -131,7 +131,7 @@ router.put(
       const apiKey = await ApiKey.findOne({ _id: req.params.id, userId: req.userId });
 
       if (!apiKey) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           error: 'API key not found',
           code: 'NOT_FOUND'
         });
@@ -140,9 +140,9 @@ router.put(
       if (name) apiKey.name = name;
       if (rateLimit !== undefined) apiKey.rateLimit = rateLimit;
       if (isActive !== undefined) apiKey.isActive = isActive;
-      if (expiresAt !== undefined) apiKey.expiresAt = expiresAt ? new Date(expiresAt) : undefined;
+      // if (expiresAt !== undefined) apiKey.expiresAt = expiresAt ? new Date(expiresAt) : undefined;
       if (permissions) apiKey.permissions = permissions;
-      if (metadata) apiKey.metadata = { ...apiKey.metadata, ...metadata };
+      // if (metadata) apiKey.metadata = { ...apiKey.metadata, ...metadata };
 
       await apiKey.save();
 
@@ -151,18 +151,18 @@ router.put(
         data: {
           id: apiKey._id,
           name: apiKey.name,
-          keyPrefix: apiKey.keyPrefix,
+          // keyPrefix: apiKey.keyPrefix,
           isActive: apiKey.isActive,
           rateLimit: apiKey.rateLimit,
-          expiresAt: apiKey.expiresAt,
+          // expiresAt: apiKey.expiresAt,
           permissions: apiKey.permissions,
-          metadata: apiKey.metadata,
+          // metadata: apiKey.metadata,
           updatedAt: apiKey.updatedAt,
         },
       });
     } catch (error: any) {
       console.error('Update API key error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to update API key',
         code: 'UPDATE_ERROR'
       });
@@ -177,13 +177,13 @@ router.put(
  */
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
-    const apiKey = await ApiKey.findOneAndDelete({ 
-      _id: req.params.id, 
-      userId: req.userId 
+    const apiKey = await ApiKey.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.userId
     });
 
     if (!apiKey) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'API key not found',
         code: 'NOT_FOUND'
       });
@@ -195,7 +195,7 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     console.error('Delete API key error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to delete API key',
       code: 'DELETE_ERROR'
     });
